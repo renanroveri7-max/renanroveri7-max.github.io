@@ -33,6 +33,15 @@
 @media(max-width:760px){.value-grid{grid-template-columns:1fr}.value-tile{min-height:0}.concept-cta{flex-direction:column;align-items:stretch}.concept-cta .btn{width:100%}.sample-link{margin-bottom:17px}}
 @media(max-width:440px){.form-actions{grid-template-columns:1fr}.value-tile h3{margin-top:12px}.concept-cta{padding:20px}}
 @media(prefers-reduced-motion:reduce){.sample-cover .sample-screen,.sample-link{transition:none}}
+
+/* Atendimento comercial via WhatsApp */
+.wa-float{position:fixed;right:24px;bottom:24px;z-index:55;display:inline-flex;align-items:center;gap:11px;min-height:56px;padding:13px 20px;border-radius:999px;background:#25d366;color:#092713;box-shadow:0 14px 35px #0008;border:1px solid #ddffe149;font-size:13px;font-weight:800;transition:transform .2s,box-shadow .2s}
+.wa-float:hover{transform:translateY(-4px);box-shadow:0 18px 40px #0009}
+.wa-float svg{flex-shrink:0}.wa-float:focus-visible,.wa-contact:focus-visible{outline:3px solid white;outline-offset:4px}
+.wa-contact{display:flex;align-items:center;gap:13px;justify-content:space-between;margin:23px 0 12px;padding:17px 18px;background:#25d366;color:#092713;border-radius:12px;font-size:14px;font-weight:800;text-decoration:none;max-width:440px;transition:transform .2s}
+.wa-contact:hover{transform:translateY(-2px)}.wa-contact>span:first-child{font-size:24px}.wa-contact>span:nth-child(2){flex:1}.wa-contact small{display:block;font-size:12px;opacity:.85;font-weight:600;margin-top:4px}.wa-contact>span:last-child{font-size:23px}
+@media(max-width:760px){.wa-float{right:17px;bottom:17px;padding:14px;border-radius:50%;width:58px;height:58px;justify-content:center}.wa-float span{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden;white-space:nowrap}.wa-float svg{width:29px;height:29px}.footer{padding-bottom:80px}}
+@media(prefers-reduced-motion:reduce){.wa-float,.wa-contact{transition:none}}
 </style>
 </head>
 <body>
@@ -43,7 +52,7 @@
       <nav id="nav" class="nav" aria-label="Navegação principal">
         <a href="#servicos">Serviços</a><a href="#conceitos">Conceitos</a><a href="#processo">Processo</a><a href="#precos">Investimento</a><a href="#contato">Contato</a>
       </nav>
-      <a href="#contato" class="head-action">Vamos conversar ↗</a>
+      <a href="https://wa.me/5519997123240?text=Ol%C3%A1!%20Conheci%20a%20ROVERI%20STUDIO%20pelo%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento." class="head-action" target="_blank" rel="noopener noreferrer" aria-label="Falar com a ROVERI STUDIO pelo WhatsApp">WhatsApp ↗</a>
       <button class="menu" id="menu" type="button" aria-controls="nav" aria-expanded="false" aria-label="Abrir menu">☰</button>
     </div>
   </header>
@@ -126,17 +135,21 @@
       <details><summary>O site garante mais vendas?</summary><p>Nenhum site garante vendas por si só. Nosso foco é construir uma experiência clara, profissional e com caminhos de contato. Resultados dependem também de oferta, tráfego, atendimento e outros fatores.</p></details>
     </div></section>
     <section class="contact" id="contato"><div class="wrap contact-grid">
-      <div class="reveal"><p class="kicker">07 / Vamos criar algo?</p><h2>Seu projeto<br>começa com<br>um <em>olá.</em></h2><p>Conta o que você tem em mente. Vamos conversar sobre a melhor forma de transformar sua ideia em uma presença digital profissional.</p><a class="email" href="mailto:renanroveri7@gmail.com?subject=Projeto%20para%20a%20Roveri%20Studio">renanroveri7@gmail.com ↗</a><p class="direct-note">Prefere seu próprio e-mail? Você pode escrever diretamente para nós, sem preencher o formulário.</p></div>
+      <div class="reveal"><p class="kicker">07 / Vamos criar algo?</p><h2>Seu projeto<br>começa com<br>um <em>olá.</em></h2><p>Conta o que você tem em mente. Vamos conversar sobre a melhor forma de transformar sua ideia em uma presença digital profissional.</p><a class="wa-contact" href="https://wa.me/5519997123240?text=Ol%C3%A1!%20Conheci%20a%20ROVERI%20STUDIO%20pelo%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento." target="_blank" rel="noopener noreferrer" aria-label="Conversar com a ROVERI STUDIO pelo WhatsApp"><span aria-hidden="true">✆</span><span>Conversar pelo WhatsApp<small>(19) 99712-3240</small></span><span aria-hidden="true">↗</span></a><p class="direct-note">Ou, se preferir, escreva por e-mail:</p><a class="email" href="mailto:renanroveri7@gmail.com?subject=Projeto%20para%20a%20Roveri%20Studio">renanroveri7@gmail.com ↗</a></div>
       <form class="form reveal" id="leadForm">
         <label for="name">Seu nome</label><input id="name" name="nome" type="text" autocomplete="name" placeholder="Como podemos te chamar?" required maxlength="100">
         <label for="reply">Seu e-mail ou WhatsApp</label><input id="reply" name="contato" type="text" placeholder="Para te responder" required maxlength="140">
         <label for="service">O que você precisa?</label><select id="service" name="servico"><option>Essencial — Landing page</option><option>Profissional — Site empresarial</option><option>Signature — Site premium + animações</option><option>Vídeo e animações</option><option>Ainda não sei</option></select>
         <label for="message">Conte um pouco do projeto</label><textarea id="message" name="mensagem" maxlength="3000" placeholder="Seu negócio, objetivo e referências..." required></textarea>
         
-        <div class="form-actions"><button type="submit" class="btn btn-primary">Abrir e-mail para enviar ↗</button><button type="button" id="copyBrief" class="btn btn-ghost">Copiar pedido</button></div><p class="form-note">O formulário prepara uma mensagem no seu aplicativo de e-mail. É necessário confirmar o envio por lá. Se preferir, copie o pedido e envie manualmente. Nenhuma informação é armazenada aqui.</p><p id="formStatus" class="status" role="status" aria-live="polite"></p>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Continuar no WhatsApp ↗</button><button type="button" id="copyBrief" class="btn btn-ghost">Copiar pedido</button></div><p class="form-note">Ao continuar, abrimos o WhatsApp com sua mensagem pronta. <strong>Você precisa confirmar o envio no WhatsApp.</strong> O site não envia automaticamente nem armazena os dados do formulário.</p><p id="formStatus" class="status" role="status" aria-live="polite"></p>
       </form>
     </div></section>
   </main>
+  <a class="wa-float" href="https://wa.me/5519997123240?text=Ol%C3%A1!%20Conheci%20a%20ROVERI%20STUDIO%20pelo%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento." target="_blank" rel="noopener noreferrer" aria-label="Pedir orçamento no WhatsApp da ROVERI STUDIO" title="Fale com a ROVERI STUDIO pelo WhatsApp">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8.4 8.4 0 0 1-8.5 8.5 9.5 9.5 0 0 1-4.1-.9L3 20l1-4.2A8.5 8.5 0 1 1 20 11.5Z"/><path d="M9 8.7c.3 2.5 2.5 4.8 5 5.1l1.4-1.1 2.1 1.1-.6 1.8c-.3.8-1.3 1-2.2.8-4.4-.8-7-3.5-7.9-7.8-.2-.9 0-1.9.8-2.2l1.8-.6 1.1 2.1Z"/></svg>
+    <span>Falar no WhatsApp</span>
+  </a>
   <footer class="footer"><div class="wrap"><a class="logo" href="#inicio"><span class="logo-mark">R</span><span>ROVERI <small>STUDIO</small></span></a><span>© <span id="year">2026</span> ROVERI STUDIO. Design com intenção.</span><a href="https://renanroveri.com.br/" rel="noopener">Portfólio de Renan Roveri ↗</a></div></footer>
   <script>
     document.documentElement.classList.add('js');
@@ -150,14 +163,14 @@
     const formStatus=document.getElementById('formStatus');
     function buildPedido(){
       const d=new FormData(leadForm);
-      return {subject:'Pedido de orçamento — '+d.get('servico'),body:['Olá, ROVERI STUDIO!','','Nome: '+d.get('nome'),'Contato para retorno: '+d.get('contato'),'Interesse: '+d.get('servico'),'','Sobre meu projeto:',String(d.get('mensagem')),'','Enviado por meio do site da ROVERI STUDIO.'].join('\n')};
+      return {subject:'Pedido de orçamento — '+d.get('servico'),body:['Olá, ROVERI STUDIO!','','Nome: '+d.get('nome'),'Contato para retorno: '+d.get('contato'),'Interesse: '+d.get('servico'),'','Sobre meu projeto:',String(d.get('mensagem')),'','Pedido preparado no site da ROVERI STUDIO.'].join('\n')};
     }
     document.querySelectorAll('[data-plan]').forEach(function(link){link.addEventListener('click',function(){document.getElementById('service').value=link.getAttribute('data-plan');});});
     leadForm.addEventListener('submit',function(e){
       e.preventDefault(); if(!leadForm.reportValidity())return;
       const p=buildPedido();
-      formStatus.textContent='Seu aplicativo de e-mail será aberto. Confira a mensagem e confirme o envio por lá.';
-      window.location.href='mailto:renanroveri7@gmail.com?subject='+encodeURIComponent(p.subject)+'&body='+encodeURIComponent(p.body);
+      formStatus.textContent='Abrindo o WhatsApp com a mensagem pronta. Confira e toque em enviar para concluir.';
+      window.location.href='https://wa.me/5519997123240?text='+encodeURIComponent(p.body);
     });
     document.getElementById('copyBrief').addEventListener('click',async function(){
       if(!leadForm.reportValidity())return;
@@ -166,8 +179,8 @@
       try{
         if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);}
         else {const el=document.createElement('textarea');el.value=text;el.style.position='fixed';el.style.opacity='0';document.body.appendChild(el);el.select();if(!document.execCommand('copy'))throw Error('Copy unavailable');el.remove();}
-        formStatus.textContent='Pedido copiado! Cole no Gmail ou no aplicativo de e-mail e envie para renanroveri7@gmail.com.';
-      }catch(err){formStatus.textContent='Não foi possível copiar automaticamente. Use o botão de e-mail ou escreva para renanroveri7@gmail.com.';}
+        formStatus.textContent='Pedido copiado! Cole em uma conversa no WhatsApp (19) 99712-3240 ou envie por e-mail.';
+      }catch(err){formStatus.textContent='Não foi possível copiar automaticamente. Use o botão de WhatsApp ou escreva para renanroveri7@gmail.com.';}
     });
   </script>
 </body>
