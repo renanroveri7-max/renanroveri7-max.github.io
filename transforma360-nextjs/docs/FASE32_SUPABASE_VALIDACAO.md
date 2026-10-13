@@ -72,3 +72,11 @@ Nunca inserir `service_role` ou `sb_secret_` em arquivos do GitHub, mensagens ou
 - **Confirmado pelo testador no navegador:** cadastro e confirmação de email funcionaram; o perfil e os registros permaneceram após recarregar a página.
 - **Ainda pendente:** segunda conta real e teste cruzado de isolamento ponta a ponta; recuperação de senha; ambiente de email/SMTP em produção; políticas LGPD e acesso público.
 - **Observação de segurança:** o Supabase Security Advisor indicou um aviso `auth_leaked_password_protection` (proteção contra senhas vazadas desativada); revisar as configurações de senha do Auth antes do lançamento.
+
+## QA com segunda conta real — 13/10/2026
+
+- Testador confirmou no navegador: segunda conta criada e autenticada; dashboard exibiu dados zerados, sem mostrar dados da primeira conta.
+- Consulta independente ao Supabase Auth: **2 usuários**, ambos com email confirmado.
+- Consulta no PostgreSQL por associação de `user_id`: **1 conta com registros** (perfil, treino, refeição, pesagem, hidratação) e **1 conta sem nenhum desses registros**.
+- Em conjunto com o teste SQL transacional RLS (SELECT/INSERT/UPDATE/DELETE entre duas identidades simuladas), o isolamento básico está validado; ainda não equivale a auditoria de segurança ou teste de invasão completo.
+- **Pendências**: recuperação de senha ponta a ponta com email, checklist de privacidade/LGPD, proteção contra senhas vazadas, acessibilidade pública da Vercel e testes de produção.
