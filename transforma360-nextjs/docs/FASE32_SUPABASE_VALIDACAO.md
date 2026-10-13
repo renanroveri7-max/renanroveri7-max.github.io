@@ -1,34 +1,66 @@
-# TRANSFORMA 360 — Fase 3.2 (Supabase real)
+# TRANSFORMA 360 — Fase 3.2: integração real e validação
 
-**Situação:** aplicação Next.js na Vercel; Supabase ainda não conectado nem validado. Não inserir dados reais antes dos testes.
+## Estado confirmado em 13/10/2026
 
-## Dependências da publicação
+| Entrega | Estado | Evidência |
+|---|---|---|
+| Projeto Supabase `transforma360` | CONCLUÍDO | ID `fwspbbjuzqfjmbvtuzjo`; organização `transforma360`; região `sa-east-1`; `ACTIVE_HEALTHY` |
+| Migração do banco | CONCLUÍDO | Migração `initial_fitness_schema_rls` com sucesso |
+| Tabelas | CONCLUÍDO | `profiles`, `workouts`, `meals`, `weight_logs`, `water_logs` |
+| Políticas RLS | CONCLUÍDO | 4 por tabela; 20 políticas criadas e verificadas; `anon` sem permissão SELECT |
+| Security Advisor | CONCLUÍDO | Nenhum alerta retornado pelo Supabase na verificação |
+| Teste sintético SQL de RLS | CONCLUÍDO | Dois UUIDs simulando sessões A/B: B não leu, inseriu como A, atualizou ou apagou registros de A em nenhuma tabela |
+| Limpeza QA | CONCLUÍDO | Transação revertida; 0 contas QA e 0 linhas residuais em todas as 5 tabelas |
+| Variáveis na Vercel | CONCLUÍDO | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`, escopos production + preview |
+| Novo deploy Next.js | CONCLUÍDO | Vercel deployment `dpl_8Sj98eJgvTxJDJWtR816QafG1FwK`, estado `READY` |
+| Autorização de callback no Supabase Auth | **PENDENTE** | Sem ferramenta conectada que modifique a configuração do Auth; deve ser ajustada no painel |
+| Teste real cadastro/email/sessão/recovery | **PENDENTE** | Ainda não realizados com contas QA reais e confirmação por email |
+| Vercel Deployment Protection | **ATIVA** | SSO do workspace habilitado para endereços `.vercel.app`; preservado até revisão de lançamento |
+| Supabase SMTP customizado / limites | **PENDENTE** | Revisar antes de convidar público e enviar emails em volume |
+| LGPD, exclusão de conta e políticas | **PENDENTE** | Imprescindível antes da comercialização |
 
-1. Um projeto Supabase sob controle do proprietário, de preferência nome `transforma360`.
-2. Rodar e revisar `sql/001_schema_rls.sql` no SQL Editor do projeto **uma única vez**.
-3. Nas configurações do Supabase Authentication, habilitar Email; ativar confirmação de email e configurar remetente SMTP para uso comercial.
-4. Authentication → URL Configuration:
-   - Site URL: `https://renanroveri7-max-github-io.vercel.app` (verificar se é o endereço final)
-   - Redirect URLs: `https://renanroveri7-max-github-io.vercel.app/auth/callback` e, para recuperação, a mesma rota com query `next=/redefinir` se necessário.
-   - Para desenvolvimento opcional: `http://localhost:3000/auth/callback`.
-5. Na Vercel, projeto Next.js correto, criar três variáveis de ambiente públicas com escopos Production e Preview apropriados:
-   - `NEXT_PUBLIC_SUPABASE_URL`: URL do projeto, `https://...supabase.co`
-   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: chave **publishable** (`sb_publishable_...`)
-   - `NEXT_PUBLIC_SITE_URL`: URL HTTPS publicada da aplicação
-6. **Não colocar** segredo `service_role`, chave secreta `sb_secret_`, token pessoal ou senha no repositório, em `NEXT_PUBLIC_` ou neste chat.
-7. Fazer redeploy para incorporar variáveis `NEXT_PUBLIC_` no bundle Next.js.
-8. Testar cadastro, confirmação de email, login, logout, recuperação de senha, acesso não autenticado a `/app` e contas diferentes.
-9. Fazer testes automatizados com duas contas descartáveis criadas apenas para QA usando `node scripts/test-rls.mjs` após definir variáveis em ambiente local seguro. O script falha se detectar dados preexistentes nessas contas; não usar contas pessoais.
-10. Desligar proteção Vercel apenas após revisar que nenhum dado real esteja acessível sem sessão, o SQL esteja protegido por RLS e as duas contas tenham sido testadas. O plano Hobby/uso comercial e LGPD exigem validação antes de vender.
+### O que o teste RLS garante — e o que não garante
 
-## Comportamento de segurança esperado
+O teste direto usou transação do PostgreSQL (`BEGIN` ... `ROLLBACK`), criou identidades temporárias em `auth.users`, selecionou o papel `authenticated` com `request.jwt.claim.sub` e validou SELECT/INSERT/UPDATE/DELETE entre A e B. Não houve alteração persistente.
 
-- `/demo`: armazenamento isolado no navegador; nenhum dado remoto.
-- `/entrar`: exige Supabase configurado para habilitar login.
-- `/app`: requer usuário autenticado e consulta ao Supabase; não reaproveita dados da demo.
-- Banco: `profiles`, `workouts`, `meals`, `weight_logs`, `water_logs` com RLS por `auth.uid() = user_id`.
-- Se a chamada remota falhar, deve informar erro sem exibir sucesso falso.
+Esse teste avalia as **políticas no banco**, não comprova que um email real chegou, que o SDK do navegador criou uma sessão válida ou que a renovação de cookies e os redirecionamentos de Auth funcionam.
 
-## Cuidados
+## Passo obrigatório no painel: URLs de autenticação
 
-Evitar coleta de diagnósticos, medicamentos, fotos e outros dados sensíveis nesta fase. Antes de comercializar, implementar aviso de privacidade, consentimento aplicável, exclusão/portabilidade de conta, política de retenção e revisão jurídica/profissional.
+A ferramenta Supabase conectada pode criar projetos, executar SQL e gerar chaves; **não expõe ações para modificar `Authentication → URL Configuration`**. Não alterar campos do Auth indiretamente pelo SQL.
+
+Acesse:
+
+**https://supabase.com/dashboard/project/fwspbbjuzqfjmbvtuzjo/auth/url-configuration**
+
+Configure:
+
+- **Site URL:** `https://renanroveri7-max-github-io.vercel.app`
+- **Redirect URLs:** `https://renanroveri7-max-github-io.vercel.app/auth/callback`
+- **Redirect URLs:** `https://renanroveri7-max-github-io.vercel.app/auth/callback?next=/redefinir` (link usado na recuperação de senha; se a interface aplicar regras glob ao caractere `?`, usar `https://renanroveri7-max-github-io.vercel.app/auth/callback**`).
+- Opcional em desenvolvimento: `http://localhost:3000/auth/callback**`.
+
+**Não inclua URLs arbitrárias de terceiros** na lista de redirecionamentos.
+
+Confira também:
+- Email habilitado e verificação de email exigida em `Authentication → Providers`.
+- Template de confirmação/recovery, remetente e configuração SMTP em `Authentication → Email` ou área SMTP correspondente.
+- Para produção, preferir provedor SMTP próprio, limites de taxa e proteção antiabuso.
+
+Docs oficiais: https://supabase.com/docs/guides/auth/redirect-urls e https://supabase.com/docs/guides/auth/passwords
+
+## Teste real a realizar após autorizar os URLs
+
+1. Confirmar que o site está acessível durante o teste. A Vercel hoje protege `.vercel.app` com login Vercel; não abrir para o público antes de revisar o produto.
+2. Criar **duas contas QA descartáveis** com emails próprios acessíveis, via `/entrar`.
+3. Confirmar emails, autenticar separadamente, verificar acesso a `/app`.
+4. Conta A: gravar perfil, treino, refeição, peso e água. Conta B: registros devem estar vazios.
+5. Tentar ler/inserir/alterar/excluir a linha de A por B via SDK autenticado (script `scripts/test-rls.mjs`). Os testes SQL anteriores não substituem este fluxo.
+6. Testar logout, link de redefinição, atualização de senha, recarga e expiração de sessão.
+7. Conferir fluxos em janela anônima e celular.
+8. Verificar se os emails de confirmação usam o destino exato e se não há redirecionamento aberto.
+9. **Só depois** revisar retirada da proteção Vercel, aviso de privacidade/LGPD e lançamento fechado para beta.
+
+## Segurança
+
+Nunca inserir `service_role` ou `sb_secret_` em arquivos do GitHub, mensagens ou variáveis `NEXT_PUBLIC_`. As chaves publicáveis são adequadas ao navegador **somente com RLS corretamente aplicada**. Os dados demo locais não são sincronizados com o banco e não devem conter informações clínicas reais.
