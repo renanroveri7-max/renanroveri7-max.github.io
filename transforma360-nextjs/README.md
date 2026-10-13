@@ -44,7 +44,7 @@ Leia **`docs/CONFIGURAR_SUPABASE.md`**. Em resumo:
 
 ## Limites desta fase
 
-- A UI web e demo são implementadas no código, mas um build Next.js real não foi executado neste ambiente porque o registro npm está inacessível.
+- O ambiente de trabalho local não conseguiu acessar o registro npm. Posteriormente, o GitHub Actions executou **npm install, typecheck e build com sucesso**: https://github.com/renanroveri7-max/renanroveri7-max.github.io/actions/runs/38479699481. Isso valida a compilação, não login ou dados online.
 - A estrutura Supabase SSR/PKCE e SQL existem, porém não foram testados contra uma conta real.
 - A triagem médica do questionário da Fase 1 **não foi migrada** nesta fase: não envie dados clínicos para os campos de texto livre. A priorização foi autenticação e isolamento dos registros.
 - Os dados locais da Fase 2.2 não são automaticamente importados para uma conta remota, por segurança.
@@ -54,3 +54,7 @@ Leia **`docs/CONFIGURAR_SUPABASE.md`**. Em resumo:
 ## Segurança para validação antes do lançamento
 
 Execute os testes com pelo menos duas contas reais diferentes: impedir que A veja/edite/apague registros de B. Revise as políticas no dashboard; confirme a configuração de email/cookies, CORS, limites, backup, exclusão de conta e LGPD com profissionais adequados. Não comercialize esta etapa como um serviço de acompanhamento clínico.
+
+## Publicação pela Vercel
+
+O código está no repositório `renanroveri7-max/renanroveri7-max.github.io`, na pasta **`transforma360-nextjs`**. Para deploy, criar projeto Vercel separado e configurar **Root Directory: `transforma360-nextjs`** e framework **Next.js**. O domínio personalizado do portfólio deve permanecer inalterado. Publicar primeiro uma URL de preview. Só configurar variáveis Supabase após criar e revisar o projeto. Veja também `DEPLOY_CHECKLIST.md`.
