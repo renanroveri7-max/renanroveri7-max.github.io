@@ -1,0 +1,19 @@
+{
+  "name": "TRANSFORMA 360 • Demonstração Dark Premium",
+  "short_name": "TRANSFORMA360",
+  "description": "Versão pública de demonstração, sem conta de usuário ou pagamento.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090b0a",
+  "theme_color": "#090b0a",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "./assets/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
