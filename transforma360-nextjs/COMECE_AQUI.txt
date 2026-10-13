@@ -1,0 +1,21 @@
+TRANSFORMA 360 — FASE 3.1
+===========================
+
+1) QUERO ABRIR O APLICATIVO AGORA, SEM INSTALAR NADA:
+   Abra o arquivo legacy/FASE22_ABRA_AQUI.html (Fase 2.2 preservada).
+   É a versão anterior, não a nova arquitetura Next.js.
+
+2) QUERO TESTAR O NOVO CÓDIGO NEXT.JS LOCALMENTE:
+   Instale Node.js (versão 22 recomendada), abra a pasta deste projeto,
+   execute npm install e depois npm run dev.
+   Abra http://localhost:3000 e clique em EXPLORAR DEMO.
+   A nova demo usa dados salvos localmente, ainda sem Supabase.
+
+3) QUERO CADASTRO/LOGIN/BANCO DE DADOS:
+   Siga docs/CONFIGURAR_SUPABASE.md. É preciso criar seu projeto Supabase,
+   aplicar sql/001_schema_rls.sql, configurar .env.local, e testar com duas contas.
+
+O que NÃO foi testado aqui: build Next.js e login Supabase reais, devido à
+indisponibilidade do registro npm e ausência das credenciais do projeto.
+
+VEJA: README.md e docs/TESTES_E_LIMITACOES.md.
