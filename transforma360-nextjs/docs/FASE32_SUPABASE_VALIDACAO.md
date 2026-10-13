@@ -64,3 +64,11 @@ Docs oficiais: https://supabase.com/docs/guides/auth/redirect-urls e https://sup
 ## Segurança
 
 Nunca inserir `service_role` ou `sb_secret_` em arquivos do GitHub, mensagens ou variáveis `NEXT_PUBLIC_`. As chaves publicáveis são adequadas ao navegador **somente com RLS corretamente aplicada**. Os dados demo locais não são sincronizados com o banco e não devem conter informações clínicas reais.
+
+## Atualização QA com a primeira conta real (13/10/2026)
+
+- **Confirmado diretamente por consulta SQL:** 1 usuário no Supabase Auth, 1 perfil, 1 treino, 1 refeição, 1 registro de peso e 1 registro de água (1.000 ml registrados naquele momento).
+- **Integridade referencial:** os registros de treino, alimentação e peso estão ligados por `user_id` a uma conta existente em `auth.users`.
+- **Confirmado pelo testador no navegador:** cadastro e confirmação de email funcionaram; o perfil e os registros permaneceram após recarregar a página.
+- **Ainda pendente:** segunda conta real e teste cruzado de isolamento ponta a ponta; recuperação de senha; ambiente de email/SMTP em produção; políticas LGPD e acesso público.
+- **Observação de segurança:** o Supabase Security Advisor indicou um aviso `auth_leaked_password_protection` (proteção contra senhas vazadas desativada); revisar as configurações de senha do Auth antes do lançamento.
