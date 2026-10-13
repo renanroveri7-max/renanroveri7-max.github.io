@@ -1,0 +1,50 @@
+name: Restore TRANSFORMA 360 Next.js sources
+on:
+  push:
+    paths:
+      - 'transforma360-nextjs/source.manifest.xz.b64'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expand source manifest
+        run: |
+          python3 - <<'PY'
+          import base64
+          import json
+          import lzma
+          from pathlib import Path
+
+          root = Path('transforma360-nextjs')
+          encoded = (root / 'source.manifest.xz.b64').read_text(encoding='ascii')
+          entries = json.loads(lzma.decompress(base64.b64decode(encoded)))
+          allowed = {'.tsx','.ts','.css','.md','.json','.sql','.txt','.example'}
+          for entry in entries:
+              rel = Path(entry['path'])
+              if rel.is_absolute() or '..' in rel.parts or rel.suffix not in allowed:
+                  raise ValueError('Unsafe source path: ' + str(rel))
+              target = root / rel
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(entry['content'], encoding='utf-8')
+          landing = root / 'src/app/page.tsx'
+          code = landing.read_text(encoding='utf-8')
+          code = code.replace('/referencia-desktop.png','/referencia-desktop.svg')
+          landing.write_text(code, encoding='utf-8')
+          public = root / 'public'
+          public.mkdir(exist_ok=True)
+          (public / 'referencia-desktop.svg').write_text("""<svg xmlns="http://www.w3.org/2000/svg" width="1116" height="800" viewBox="0 0 1116 800"><rect width="1116" height="800" rx="30" fill="#0c0f0d"/><rect x="28" y="28" width="80" height="744" rx="16" fill="#151b17"/><rect x="46" y="114" width="44" height="44" rx="12" fill="#c7f667"/><text x="142" y="96" font-family="Arial" font-size="34" fill="#fff" font-weight="bold">TRANSFORMA 360</text><text x="144" y="160" font-family="Arial" font-size="22" fill="#aab4a9">Painel de atividades</text><rect x="144" y="195" width="424" height="240" rx="24" fill="#1b231d"/><rect x="590" y="195" width="496" height="240" rx="24" fill="#1b231d"/><rect x="144" y="459" width="942" height="294" rx="24" fill="#1b231d"/><circle cx="840" cy="314" r="82" fill="none" stroke="#c7f667" stroke-width="33" stroke-dasharray="390 125"/><path d="M190 355l58-65 82 31 73-103 97 57" fill="none" stroke="#38dfb2" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><rect x="175" y="500" width="284" height="210" rx="22" fill="#c7f667"/><rect x="481" y="500" width="278" height="210" rx="22" fill="#43e1b3"/><rect x="781" y="500" width="270" height="210" rx="22" fill="#242e26"/></svg>""", encoding='utf-8')
+          print('Restored', len(entries), 'source files')
+          PY
+      - name: Commit sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add transforma360-nextjs
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(transforma360): expand Next.js project sources"
+            git push
+          fi
