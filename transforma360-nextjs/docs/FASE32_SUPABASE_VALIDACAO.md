@@ -87,3 +87,11 @@ Nunca inserir `service_role` ou `sb_secret_` em arquivos do GitHub, mensagens ou
 - Usuário configurou o SMTP do Resend no painel Supabase e relatou que o teste posterior **funcionou**. O app já trata limitações SMTP com mensagem compreensível em português (commit `bad6b2aaa0d9e3e0e0ac1f547deae16b087db471`).
 - Logs de Auth mostram eventos de recuperação de senha, mas a conexão consultada não confirmou de forma independente que uma nova senha foi definida e utilizada para login. Não tratar teste de recuperação ponta a ponta como concluído sem confirmação explícita.
 - Para lançamento comercial ainda faltam proteção contra senhas vazadas (aviso atual do Security Advisor), política LGPD/consentimento/exclusão, configuração de limites e antiabuso dos emails e revisão da proteção do deploy Vercel.
+
+## Encerramento do QA principal de autenticação — confirmação do usuário
+
+- **Recuperação de senha ponta a ponta: APROVADA segundo teste manual informado pelo usuário.** O usuário confirmou ter recebido o email do Resend, redefinido a senha pelo link e entrado no aplicativo com a nova senha.
+- Consulta posterior ao Supabase Auth: **2 contas**, ambas com email confirmado e histórico de login.
+- O teste prévio de duas contas sem cruzamento de dados e o SQL transacional de RLS estão documentados acima.
+- **Fase 3.2: fluxos fundamentais validados em ambiente de teste.** Isso não significa autorização para lançamento comercial: permanecem pendentes requisitos de LGPD (consentimento, política, portabilidade e exclusão), proteção contra senhas vazadas, proteção contra abuso no Auth, observabilidade/erros, critérios de estabilidade e revisão da proteção de acesso da Vercel.
+- Security Advisor ainda retorna o aviso `auth_leaked_password_protection` (proteção contra senhas vazadas desativada). Documentação oficial: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
