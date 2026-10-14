@@ -31,7 +31,7 @@ export function validateExtendedAssessment(a:ExtendedTrainingAssessment):string|
  return null;
 }
 export type PersonalizedBlueprint=TrainingBlueprint&{personalization?:{
- method:'evidence_rules_v1';scheduledDays:DayKey[];focusAreas:FocusArea[];
+ method:'evidence_rules_v1'|'model_guided_v1';model?:string;scheduledDays:DayKey[];focusAreas:FocusArea[];
  baselineLoadPolicy:'calibrar_na_primeira_sessao';
  evidence:{label:string;url:string}[];}};
 export function createAutomaticPlan(a:ExtendedTrainingAssessment):PersonalizedBlueprint{
