@@ -9,6 +9,7 @@ import {makeTrainingBlueprint,recommendationForSession,validateAssessment,
 import {goalLabels,type Goal,type Place} from '@/types/models';
 import ExerciseTracker from '@/components/ExerciseTracker';
 import PremiumAssessmentFields from '@/components/PremiumAssessmentFields';
+import AiPlanCard from '@/components/AiPlanCard';
 import type {ExerciseSetLog} from '@/lib/exercise-history';
 import {createAutomaticPlan,defaultTrainingDetails,dayNames,focusNames,validateExtendedAssessment,
   type DayKey,type FocusArea,type TrainingDetails,type PersonalizedBlueprint} from '@/lib/premium-planner';
@@ -122,6 +123,30 @@ export default function TrainingPlanner({userId}:Props){
     }catch(err){notice('O plano não foi confirmado na nuvem: '+(err instanceof Error?err.message:'erro inesperado'),true)}
     finally{setBusy(false)}
   };
+  const generateWithAi=async()=>{
+    if(busy)return;
+    const err=validateExtendedAssessment({...assessment,...details});
+    if(err){notice(err,true);return}
+    if(!consent){notice('Primeiro aceite o armazenamento da avaliação na sua conta.',true);return}
+    setBusy(true);notice('');
+    try{
+      const client=createClient();
+      const {error:assessmentError}=await client.from('training_assessments').upsert({
+        user_id:userId,...assessment,...details,consent_accepted_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      },{onConflict:'user_id'});
+      if(assessmentError)throw assessmentError;
+      const res=await fetch('/api/ai/training-plan',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({confirmProviderConsent:true})
+      });
+      const output=await res.json() as {error?:string;plan?:StoredPlan};
+      if(!res.ok||!output.plan)throw new Error(output.error||'O servidor não confirmou o plano.');
+      setPlan(output.plan);setCheckins([]);setSetLogs([]);setWeek(1);setEditing(false);
+      notice('Seu plano com IA foi gerado, validado e salvo na sua conta.');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }catch(e){notice('IA: '+(e instanceof Error?e.message:'falha inesperada'),true)}
+    finally{setBusy(false)}
+  };
   const markSession=async(sessionIndex:number,effort:TrainingCheckin['effort'])=>{
     if(!plan||busy)return;
     setBusy(true);notice('');
@@ -196,7 +221,9 @@ export default function TrainingPlanner({userId}:Props){
               <p>O resultado é uma <strong>sugestão educativa automatizada</strong>, não avaliação clínica, diagnóstico ou acompanhamento individual por profissional de educação física. A comercialização depende de revisão de privacidade e requisitos legais.</p>
             </div>
             {assessment.readiness==='requires_clearance'&&<div className="pl-alert pl-alert-error"><ShieldAlert size={19}/> Por segurança, a geração fica bloqueada até que você tenha orientação profissional apropriada.</div>}
-            <button className="pl-primary" disabled={busy||assessment.readiness!=='ready'||!consent||!assessment.age_confirmed} type="submit"><Sparkles size={19}/>{busy?'Criando plano…':'Gerar automaticamente meu treino'}<ArrowRight size={17}/></button>
+            <AiPlanCard busy={busy} onGenerate={generateWithAi}/>
+            <p className="pl-ai-rules-label">Versão de demonstração — planejamento por regras, sem IA:</p>
+            <button className="pl-outline" disabled={busy||assessment.readiness!=='ready'||!consent||!assessment.age_confirmed} type="submit"><Sparkles size={17}/>{busy?'Criando…':'Gerar plano por regras (teste)'}</button>
           </form>
           {plan&&<button type="button" className="pl-text-button" onClick={()=>setEditing(false)}>Voltar ao plano atual</button>}
         </section>:null}
@@ -228,7 +255,7 @@ export default function TrainingPlanner({userId}:Props){
             </article>
           })}</div>
           <section className="pl-panel pl-safety"><div><ShieldAlert size={24}/><h2>Segurança e limites do plano</h2></div><ul>{plan.blueprint.safety.map(t=><li key={t}>{t}</li>)}</ul><p>{plan.blueprint.rationale}</p>
-              {plan.blueprint.personalization?.evidence&&<div className="pl-evidence"><strong>Diretrizes utilizadas como referência</strong>{plan.blueprint.personalization.evidence.map(src=><a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer">{src.label} ↗</a>)}<small>Gerador atual fundamentado em regras e estudos. Não há integração com modelo de IA ativada nesta versão.</small></div>}
+              {plan.blueprint.personalization?.evidence&&<div className="pl-evidence"><strong>Diretrizes utilizadas como referência</strong>{plan.blueprint.personalization.evidence.map(src=><a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer">{src.label} ↗</a>)}<small>{plan.blueprint.personalization?.method==='model_guided_v1'?'Plano reorganizado por modelo de IA e validado pelo catálogo do aplicativo. Não há prescrição clínica nem cargas inventadas.':'Plano gerado pelo motor de regras, sem uso de modelo de IA.'}</small></div>}
               <div className="pl-footer-actions"><Link href="/app" className="pl-outline"><ArrowLeft size={16}/> Painel e histórico manual</Link><button type="button" className="pl-danger" onClick={()=>void deleteTraining()} disabled={busy}><Trash2 size={17}/> Apagar avaliação e planos</button></div></section>
         </div>}
         {!plan&&<p className="pl-footnote">Seus treinos anteriores continuam no painel. O novo plano é separado do histórico manual e só aparece após você confirmar o salvamento.</p>}
