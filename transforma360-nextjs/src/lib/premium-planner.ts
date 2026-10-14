@@ -48,8 +48,14 @@ export function createAutomaticPlan(a:ExtendedTrainingAssessment):PersonalizedBl
      if(found&&ex.length<max)ex.push({...found,id:found.movement+'-focus-'+i,sets:1,tip:found.tip+' Complementar, opcional.'});
    }
    const favorCardio=(a.goal==='gordura'||a.goal==='condicionamento'||a.cardio_preference==='gosto');
-   if(favorCardio&&a.cardio_preference!=='nao_gosto'&&a.minutes_per_session>=45&&!ex.some(e=>e.movement==='cardio')&&ex.length<max)
-     ex.push({id:'cardio-auto-'+i,name:'Caminhada em ritmo confortável',movement:'cardio',sets:1,reps:'8–12 min',restSeconds:0,tip:'Ritmo que permita conversar.'});
+   if(favorCardio&&a.cardio_preference!=='nao_gosto'&&a.minutes_per_session>=30&&!ex.some(e=>e.movement==='cardio')){
+     const cardio:ExerciseSuggestion={id:'cardio-auto-'+i,name:'Caminhada em ritmo confortável',movement:'cardio',sets:1,reps:a.minutes_per_session<=30?'5–8 min':'8–12 min',restSeconds:0,tip:'Ritmo que permita conversar.'};
+     if(ex.length<max)ex.push(cardio);
+     else if(a.goal==='gordura'||a.goal==='condicionamento'){
+       const core=ex.findIndex(e=>e.movement==='core');
+       if(core>=0)ex[core]=cardio;
+     }
+   }
    ex=ex.map((item):ExerciseSuggestion=>{
      const timed=item.movement==='cardio'||item.movement==='mobilidade';
      const reps=timed?item.reps:item.movement==='core'?'8 por lado':a.goal==='condicionamento'||a.goal==='gordura'?'12':'10';
