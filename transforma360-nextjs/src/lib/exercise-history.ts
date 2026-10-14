@@ -82,7 +82,7 @@ export function validateSetEntry(entry:SetEntry,isTimed:boolean):string|null{
     if(entry.duration_minutes!==null||entry.repetitions===null||!Number.isInteger(entry.repetitions)
       ||entry.repetitions<1||entry.repetitions>300)return 'Informe de 1 a 300 repetições.';
     if(entry.load_kg!==null && (!Number.isFinite(entry.load_kg)||entry.load_kg<0
-      ||entry.load_kg>500||Math.round(entry.load_kg*100)!==entry.load_kg*100))
+      ||entry.load_kg>500||Math.abs(Math.round(entry.load_kg*100)-entry.load_kg*100)>0.000001))
       return 'Informe uma carga de 0 a 500 kg, com até duas casas decimais.';
   }
   if(entry.effort_rpe!==null&&(!Number.isInteger(entry.effort_rpe)||entry.effort_rpe<1||entry.effort_rpe>10))
