@@ -9,6 +9,8 @@ import {makeTrainingBlueprint,recommendationForSession,validateAssessment,
 import {goalLabels,type Goal,type Place} from '@/types/models';
 import ExerciseTracker from '@/components/ExerciseTracker';
 import type {ExerciseSetLog} from '@/lib/exercise-history';
+import {createAutomaticPlan,defaultTrainingDetails,dayNames,focusNames,validateExtendedAssessment,
+  type DayKey,type FocusArea,type TrainingDetails} from '@/lib/premium-planner';
 
 type StoredPlan={id:string;blueprint:TrainingBlueprint;created_at:string};
 type Props={userId:string};
@@ -18,6 +20,7 @@ const shortDate=(date:string)=>new Date(date).toLocaleDateString('pt-BR',{day:'2
 
 export default function TrainingPlanner({userId}:Props){
   const [assessment,setAssessment]=useState<TrainingAssessment>(initial);
+  const [details,setDetails]=useState<TrainingDetails>(defaultTrainingDetails);
   const [consent,setConsent]=useState(false);
   const [plan,setPlan]=useState<StoredPlan|null>(null);
   const [checkins,setCheckins]=useState<TrainingCheckin[]>([]);
@@ -35,7 +38,7 @@ export default function TrainingPlanner({userId}:Props){
     try{
       const client=createClient();
       const [assessmentResult,planResult]=await Promise.all([
-        client.from('training_assessments').select('goal,experience,training_place,equipment,days_per_week,minutes_per_session,age_confirmed,readiness,consent_accepted_at').eq('user_id',userId).maybeSingle(),
+        client.from('training_assessments').select('goal,experience,training_place,equipment,days_per_week,minutes_per_session,age_confirmed,readiness,consent_accepted_at,age_years,height_cm,body_mass_kg,daily_activity,months_training,preferred_days,focus_areas,cardio_preference,progression_preference,sleep_quality').eq('user_id',userId).maybeSingle(),
         client.from('training_plans').select('id,blueprint,created_at').eq('user_id',userId).order('created_at',{ascending:false}).limit(1)
       ]);
       if(assessmentResult.error)throw assessmentResult.error;
@@ -47,6 +50,18 @@ export default function TrainingPlanner({userId}:Props){
           days_per_week:a.days_per_week,minutes_per_session:a.minutes_per_session,
           age_confirmed:a.age_confirmed,readiness:a.readiness as TrainingAssessment['readiness']});
         setConsent(Boolean(a.consent_accepted_at));
+        const defaults=defaultTrainingDetails();
+        setDetails({
+          age_years:a.age_years??null,height_cm:a.height_cm??null,
+          body_mass_kg:a.body_mass_kg===null?null:Number(a.body_mass_kg),
+          daily_activity:a.daily_activity||defaults.daily_activity,
+          months_training:a.months_training??0,
+          preferred_days:(a.preferred_days||[]) as DayKey[],
+          focus_areas:(a.focus_areas||[]) as FocusArea[],
+          cardio_preference:a.cardio_preference||defaults.cardio_preference,
+          progression_preference:a.progression_preference||defaults.progression_preference,
+          sleep_quality:a.sleep_quality||defaults.sleep_quality
+        });
       }
       const latest=(planResult.data?.[0]||null) as StoredPlan|null;
       setPlan(latest);
@@ -86,22 +101,22 @@ export default function TrainingPlanner({userId}:Props){
   },[plan]);
   const generate=async(e:FormEvent)=>{
     e.preventDefault();
-    const err=validateAssessment(assessment);
+    const err=validateExtendedAssessment({...assessment,...details});
     if(err){notice(err,true);return}
     if(!consent){notice('Leia e aceite o uso dos dados mínimos da avaliação para criar o plano.',true);return}
     setBusy(true);notice('');
     try {
       const client=createClient();
-      const blueprint=makeTrainingBlueprint(assessment);
+      const blueprint=createAutomaticPlan({...assessment,...details});
       const {error:assessmentError}=await client.from('training_assessments').upsert({
-        user_id:userId,...assessment,consent_accepted_at:new Date().toISOString(),updated_at:new Date().toISOString()
+        user_id:userId,...assessment,...details,consent_accepted_at:new Date().toISOString(),updated_at:new Date().toISOString()
       },{onConflict:'user_id'});
       if(assessmentError)throw assessmentError;
       const {data,error}=await client.from('training_plans').insert({user_id:userId,blueprint}).select('id,blueprint,created_at').single();
       if(error)throw error;
       if(!data?.id)throw new Error('O Supabase não confirmou o novo plano.');
       setPlan(data as StoredPlan);setCheckins([]);setSetLogs([]);setWeek(1);setEditing(false);
-      notice('Plano de quatro semanas salvo na sua conta. Revise os exercícios e adapte ao seu conforto.');
+      notice('Plano automático salvo com exercícios, séries, repetições e descansos. Revise as orientações antes de iniciar.');
       window.scrollTo({top:0,behavior:'smooth'});
     }catch(err){notice('O plano não foi confirmado na nuvem: '+(err instanceof Error?err.message:'erro inesperado'),true)}
     finally{setBusy(false)}
@@ -133,13 +148,15 @@ export default function TrainingPlanner({userId}:Props){
       if(result.error)throw result.error;
       const assess=await client.from('training_assessments').delete().eq('user_id',userId);
       if(assess.error)throw assess.error;
-      setPlan(null);setCheckins([]);setSetLogs([]);setAssessment(initial);setConsent(false);setWeek(1);setEditing(true);
+      setPlan(null);setCheckins([]);setSetLogs([]);setAssessment(initial);setDetails(defaultTrainingDetails());setConsent(false);setWeek(1);setEditing(true);
       notice('Avaliação, planos e conclusões removidos da sua conta.');
     }catch(err){notice('Não foi possível concluir a exclusão remota: '+(err instanceof Error?err.message:'erro inesperado'),true)}
     finally{setBusy(false)}
   };
   const toggleEquipment=(item:Equipment)=>setAssessment(a=>({...a,equipment:a.equipment.includes(item)?a.equipment.filter(x=>x!==item):[...a.equipment,item]}));
   const showForm=editing||!plan;
+  const toggleDay=(item:DayKey)=>setDetails(a=>({...a,preferred_days:a.preferred_days.includes(item)?a.preferred_days.filter(x=>x!==item):[...a.preferred_days,item]}));
+  const toggleFocus=(item:FocusArea)=>setDetails(a=>({...a,focus_areas:a.focus_areas.includes(item)?a.focus_areas.filter(x=>x!==item):[...a.focus_areas,item]}));
   return <main className="pl-shell">
     <div className="pl-container">
       <header className="pl-header">
@@ -147,9 +164,9 @@ export default function TrainingPlanner({userId}:Props){
         <Link href="/" className="pl-brand">TRANSFORMA<span>360</span></Link>
       </header>
       <div className="pl-hero">
-        <span className="pl-eyebrow"><Sparkles size={15}/> PLANEJAMENTO INTELIGENTE • FASE 3.3.1</span>
+        <span className="pl-eyebrow"><Sparkles size={15}/> AVALIAÇÃO E TREINO AUTOMÁTICO • TRANSFORMA 360</span>
         <h1>Seu treino. Seu ritmo.<br/><em>Um plano para evoluir.</em></h1>
-        <p>Organize quatro semanas, registre cada série, carga e esforço percebido e acompanhe sua evolução real. Sem promessas irreais, sem dados inventados.</p>
+        <p>Responda à avaliação uma vez. Receba automaticamente seus treinos com dias, exercícios, séries, repetições e descansos. Basta abrir e seguir o plano.</p>
         <div className="pl-hero-stats">
           <span><ShieldAlert size={16}/> Triagem antes do plano</span><span><CalendarDays size={16}/> 4 semanas</span><span><LockKeyhole size={16}/> Dados privados</span>
         </div>
@@ -159,7 +176,7 @@ export default function TrainingPlanner({userId}:Props){
         {plan&&planValid&&!showForm&&<div className="pl-toolbar"><div><span className="pl-kicker">PROGRAMA ATIVO</span><h2>Plano de {plan.blueprint.weeks} semanas</h2><p>Criado em {shortDate(plan.created_at)} · {plan.blueprint.days.length} sessões por semana · {plan.blueprint.createdFor.minutes_per_session} min disponíveis</p></div><button className="pl-outline" type="button" onClick={()=>{setEditing(true);notice('')}}><RefreshCw size={16}/> Reavaliar e gerar novo plano</button></div>}
         {plan&&!planValid&&<p className="pl-alert pl-alert-error">Este plano possui uma versão não reconhecida. Reavalie antes de utilizá-lo.</p>}
         {showForm?<section className="pl-panel">
-          <div className="pl-section-head"><div><span className="pl-kicker">01 · SEU PONTO DE PARTIDA</span><h2>Avaliação inicial</h2><p>Responda somente o necessário para organizar a rotina. Não informe doenças, medicamentos ou diagnósticos.</p></div><ClipboardCheck size={30}/></div>
+          <div className="pl-section-head"><div><span className="pl-kicker">01 · CONHECER VOCÊ</span><h2>Sua avaliação personalizada</h2><p>Responda sobre seu corpo, objetivo e rotina. O plano é gerado pronto, sem precisar cadastrar séries e cargas antes de começar. Não informe diagnósticos nem medicamentos.</p></div><ClipboardCheck size={30}/></div>
           <form onSubmit={e=>void generate(e)} className="pl-form">
             <div className="pl-fields">
               <label>Objetivo principal<select value={assessment.goal} onChange={e=>setAssessment(a=>({...a,goal:e.target.value as Goal}))}>{Object.entries(goalLabels).map(([value,label])=><option value={value} key={value}>{label}</option>)}</select></label>
@@ -176,7 +193,7 @@ export default function TrainingPlanner({userId}:Props){
               <p>O resultado é uma <strong>sugestão educativa automatizada</strong>, não avaliação clínica, diagnóstico ou acompanhamento individual por profissional de educação física. A comercialização depende de revisão de privacidade e requisitos legais.</p>
             </div>
             {assessment.readiness==='requires_clearance'&&<div className="pl-alert pl-alert-error"><ShieldAlert size={19}/> Por segurança, a geração fica bloqueada até que você tenha orientação profissional apropriada.</div>}
-            <button className="pl-primary" disabled={busy||assessment.readiness!=='ready'||!consent||!assessment.age_confirmed} type="submit"><Sparkles size={19}/>{busy?'Salvando na nuvem…':'Gerar meu plano de 4 semanas'}<ArrowRight size={17}/></button>
+            <button className="pl-primary" disabled={busy||assessment.readiness!=='ready'||!consent||!assessment.age_confirmed} type="submit"><Sparkles size={19}/>{busy?'Criando plano…':'Gerar automaticamente meu treino'}<ArrowRight size={17}/></button>
           </form>
           {plan&&<button type="button" className="pl-text-button" onClick={()=>setEditing(false)}>Voltar ao plano atual</button>}
         </section>:null}
