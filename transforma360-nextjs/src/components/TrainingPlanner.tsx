@@ -8,11 +8,12 @@ import {makeTrainingBlueprint,recommendationForSession,validateAssessment,
   type Equipment,type TrainingAssessment,type TrainingBlueprint,type TrainingCheckin} from '@/lib/training-engine';
 import {goalLabels,type Goal,type Place} from '@/types/models';
 import ExerciseTracker from '@/components/ExerciseTracker';
+import PremiumAssessmentFields from '@/components/PremiumAssessmentFields';
 import type {ExerciseSetLog} from '@/lib/exercise-history';
 import {createAutomaticPlan,defaultTrainingDetails,dayNames,focusNames,validateExtendedAssessment,
-  type DayKey,type FocusArea,type TrainingDetails} from '@/lib/premium-planner';
+  type DayKey,type FocusArea,type TrainingDetails,type PersonalizedBlueprint} from '@/lib/premium-planner';
 
-type StoredPlan={id:string;blueprint:TrainingBlueprint;created_at:string};
+type StoredPlan={id:string;blueprint:PersonalizedBlueprint;created_at:string};
 type Props={userId:string};
 const initial:TrainingAssessment={goal:'consistencia',experience:'iniciante',training_place:'academia',equipment:[],days_per_week:3,minutes_per_session:45,age_confirmed:false,readiness:'ready'};
 const placeLabels:Record<Place,string>={academia:'Academia',casa:'Em casa',ar_livre:'Ao ar livre'};
@@ -178,6 +179,8 @@ export default function TrainingPlanner({userId}:Props){
         {showForm?<section className="pl-panel">
           <div className="pl-section-head"><div><span className="pl-kicker">01 · CONHECER VOCÊ</span><h2>Sua avaliação personalizada</h2><p>Responda sobre seu corpo, objetivo e rotina. O plano é gerado pronto, sem precisar cadastrar séries e cargas antes de começar. Não informe diagnósticos nem medicamentos.</p></div><ClipboardCheck size={30}/></div>
           <form onSubmit={e=>void generate(e)} className="pl-form">
+            <PremiumAssessmentFields details={details} onChange={setDetails}/>
+            <div className="pl-assessment-group-head"><span>ETAPA 04</span><h3>Objetivo, equipamento e tempo</h3><p>Com essas informações, o programa decide os exercícios, as séries, as repetições e os descansos sem pedir sua ficha pronta.</p></div>
             <div className="pl-fields">
               <label>Objetivo principal<select value={assessment.goal} onChange={e=>setAssessment(a=>({...a,goal:e.target.value as Goal}))}>{Object.entries(goalLabels).map(([value,label])=><option value={value} key={value}>{label}</option>)}</select></label>
               <label>Experiência com exercícios<select value={assessment.experience} onChange={e=>setAssessment(a=>({...a,experience:e.target.value as TrainingAssessment['experience']}))}><option value="iniciante">Iniciante ou retornando após pausa</option><option value="intermediario">Já treino com regularidade</option><option value="avancado">Experiente, com boa técnica</option></select></label>
@@ -202,20 +205,31 @@ export default function TrainingPlanner({userId}:Props){
             <div className="pl-weeks">{[1,2,3,4].map(w=><button key={w} type="button" className={'pl-week '+(week===w?'selected':'')} onClick={()=>setWeek(w)}><span>SEMANA</span><strong>{String(w).padStart(2,'0')}</strong><small>{checkins.filter(c=>c.week_number===w).length} / {plan.blueprint.days.length} sessões</small></button>)}</div>
             <div className="pl-progress"><span style={{width:(completeCount/plan.blueprint.days.length*100)+'%'}}/></div>
             <p className="pl-week-note">{plan.blueprint.weeklyProgression[week-1]}</p>
+            <p className="pl-autofill-note"><Sparkles size={16}/> Exercícios, séries e repetições já definidos para você. Basta seguir a ficha; não é necessário informar cargas nem registrar séries para usar o plano.</p>
           </section>
           <div className="pl-workouts">{plan.blueprint.days.map((d)=>{
             const done=checkins.find(c=>c.week_number===week&&c.session_index===d.index);
             return <article className="pl-panel pl-day" key={d.index}>
-              <div className="pl-day-header"><div><span className="pl-kicker">SESSÃO {String(d.index+1).padStart(2,'0')}</span><h3>{d.title}</h3><p>{d.focus} · até {d.duration} min disponíveis</p></div>{done?<span className="pl-done"><CheckCircle2 size={16}/> Concluída</span>:<span className="pl-pending">Pendente</span>}</div>
+              <div className="pl-day-header"><div><span className="pl-kicker">SESSÃO {String(d.index+1).padStart(2,'0')}{plan.blueprint.personalization?.scheduledDays?.[d.index]?' · '+dayNames[plan.blueprint.personalization.scheduledDays[d.index]]:''}</span><h3>{d.title}</h3><p>{d.focus} · até {d.duration} min disponíveis</p></div>{done?<span className="pl-done"><CheckCircle2 size={16}/> Concluída</span>:<span className="pl-pending">Pendente</span>}</div>
               <p className="pl-note"><Info size={16}/>{d.warmup}</p>
-              <ExerciseTracker key={plan.id+'-'+week+'-'+d.index} userId={userId}
+              <div className="pl-exercise-list">{d.exercises.map((ex,j)=><div className="pl-exercise" key={ex.id}><span className="pl-count">{j+1}</span><div><strong>{ex.name}</strong><small>{ex.tip}</small></div><div className="pl-exercise-meta"><b>{ex.sets} × {ex.reps}</b><small>{ex.restSeconds>0?'Descanso '+ex.restSeconds+'s':'Ritmo confortável'}</small></div></div>)}</div>
+              <details className="pl-optional-tracker"><summary>Registro avançado de séries (opcional)</summary>
+                <ExerciseTracker key={plan.id+'-'+week+'-'+d.index} userId={userId}
                 planId={plan.id} week={week} sessionIndex={d.index}
                 exercises={d.exercises} logs={setLogs} onChanged={refreshSetLogs}/>
+              </details>
               <p className="pl-recommendation"><Sparkles size={16}/>{recommendationForSession(checkins,d.index,week)}</p>
-              <div className="pl-complete"><span>{done?'Esforço registrado: '+({leve:'Leve',adequado:'Adequado',dificil:'Difícil'} as const)[done.effort]:'Concluiu? Registre como foi a sessão:'}</span><div className="pl-effort-buttons">{(['leve','adequado','dificil'] as const).map(eff=><button key={eff} type="button" disabled={busy} className={done?.effort===eff?'chosen':''} onClick={()=>void markSession(d.index,eff)}>{eff==='leve'?'Leve':eff==='adequado'?'Adequado':'Difícil'}{done?.effort===eff&&<Check size={14}/>}</button>)}</div></div>
+              <div className="pl-complete">
+                <span>{done?'Conclusão: '+({leve:'Leve',adequado:'Adequado',dificil:'Difícil',nao_informado:'sem avaliação de esforço'} as const)[done.effort]:'Terminou o treino? Confirme com um toque:'}</span>
+                <button type="button" className="pl-one-tap" disabled={busy} onClick={()=>void markSession(d.index,'nao_informado')}>
+                  <CheckCircle2 size={18}/>{done?'Treino concluído · toque para atualizar':'Concluir treino'}
+                </button>
+                <details className="pl-effort-optional"><summary>Como foi o esforço? (opcional)</summary><div className="pl-effort-buttons">{(['leve','adequado','dificil'] as const).map(eff=><button key={eff} type="button" disabled={busy} className={done?.effort===eff?'chosen':''} onClick={()=>void markSession(d.index,eff)}>{eff==='leve'?'Leve':eff==='adequado'?'Adequado':'Difícil'}{done?.effort===eff&&<Check size={14}/>}</button>)}</div></details></div>
             </article>
           })}</div>
-          <section className="pl-panel pl-safety"><div><ShieldAlert size={24}/><h2>Segurança e limites do plano</h2></div><ul>{plan.blueprint.safety.map(t=><li key={t}>{t}</li>)}</ul><p>{plan.blueprint.rationale}</p><div className="pl-footer-actions"><Link href="/app" className="pl-outline"><ArrowLeft size={16}/> Painel e histórico manual</Link><button type="button" className="pl-danger" onClick={()=>void deleteTraining()} disabled={busy}><Trash2 size={17}/> Apagar avaliação e planos</button></div></section>
+          <section className="pl-panel pl-safety"><div><ShieldAlert size={24}/><h2>Segurança e limites do plano</h2></div><ul>{plan.blueprint.safety.map(t=><li key={t}>{t}</li>)}</ul><p>{plan.blueprint.rationale}</p>
+              {plan.blueprint.personalization?.evidence&&<div className="pl-evidence"><strong>Diretrizes utilizadas como referência</strong>{plan.blueprint.personalization.evidence.map(src=><a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer">{src.label} ↗</a>)}<small>Gerador atual fundamentado em regras e estudos. Não há integração com modelo de IA ativada nesta versão.</small></div>}
+              <div className="pl-footer-actions"><Link href="/app" className="pl-outline"><ArrowLeft size={16}/> Painel e histórico manual</Link><button type="button" className="pl-danger" onClick={()=>void deleteTraining()} disabled={busy}><Trash2 size={17}/> Apagar avaliação e planos</button></div></section>
         </div>}
         {!plan&&<p className="pl-footnote">Seus treinos anteriores continuam no painel. O novo plano é separado do histórico manual e só aparece após você confirmar o salvamento.</p>}
       </>}
