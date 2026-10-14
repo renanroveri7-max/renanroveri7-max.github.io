@@ -221,8 +221,8 @@ export default function TrainingPlanner({userId}:Props){
               <p className="pl-recommendation"><Sparkles size={16}/>{recommendationForSession(checkins,d.index,week)}</p>
               <div className="pl-complete">
                 <span>{done?'Conclusão: '+({leve:'Leve',adequado:'Adequado',dificil:'Difícil',nao_informado:'sem avaliação de esforço'} as const)[done.effort]:'Terminou o treino? Confirme com um toque:'}</span>
-                <button type="button" className="pl-one-tap" disabled={busy} onClick={()=>void markSession(d.index,'nao_informado')}>
-                  <CheckCircle2 size={18}/>{done?'Treino concluído · toque para atualizar':'Concluir treino'}
+                <button type="button" className="pl-one-tap" disabled={busy||Boolean(done)} onClick={()=>void markSession(d.index,'nao_informado')}>
+                  <CheckCircle2 size={18}/>{done?'Treino concluído':'Concluir treino'}
                 </button>
                 <details className="pl-effort-optional"><summary>Como foi o esforço? (opcional)</summary><div className="pl-effort-buttons">{(['leve','adequado','dificil'] as const).map(eff=><button key={eff} type="button" disabled={busy} className={done?.effort===eff?'chosen':''} onClick={()=>void markSession(d.index,eff)}>{eff==='leve'?'Leve':eff==='adequado'?'Adequado':'Difícil'}{done?.effort===eff&&<Check size={14}/>}</button>)}</div></details></div>
             </article>
