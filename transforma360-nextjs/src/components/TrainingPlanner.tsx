@@ -7,6 +7,8 @@ import {createClient} from '@/lib/supabase/browser';
 import {makeTrainingBlueprint,recommendationForSession,validateAssessment,
   type Equipment,type TrainingAssessment,type TrainingBlueprint,type TrainingCheckin} from '@/lib/training-engine';
 import {goalLabels,type Goal,type Place} from '@/types/models';
+import ExerciseTracker from '@/components/ExerciseTracker';
+import type {ExerciseSetLog} from '@/lib/exercise-history';
 
 type StoredPlan={id:string;blueprint:TrainingBlueprint;created_at:string};
 type Props={userId:string};
@@ -19,6 +21,7 @@ export default function TrainingPlanner({userId}:Props){
   const [consent,setConsent]=useState(false);
   const [plan,setPlan]=useState<StoredPlan|null>(null);
   const [checkins,setCheckins]=useState<TrainingCheckin[]>([]);
+  const [setLogs,setSetLogs]=useState<ExerciseSetLog[]>([]);
   const [week,setWeek]=useState(1);
   const [editing,setEditing]=useState(true);
   const [busy,setBusy]=useState(false);
@@ -49,16 +52,32 @@ export default function TrainingPlanner({userId}:Props){
       setPlan(latest);
       setEditing(!latest);
       if(latest){
-        const result=await client.from('training_checkins').select('id,session_index,week_number,effort,completed_at')
-          .eq('user_id',userId).eq('plan_id',latest.id).order('week_number');
+        const [result, setResult]=await Promise.all([
+          client.from('training_checkins').select('id,session_index,week_number,effort,completed_at')
+            .eq('user_id',userId).eq('plan_id',latest.id).order('week_number'),
+          client.from('training_set_logs').select('id,plan_id,week_number,session_index,exercise_id,set_number,repetitions,duration_minutes,load_kg,effort_rpe,recorded_at')
+            .eq('user_id',userId).eq('plan_id',latest.id).order('recorded_at',{ascending:false}).limit(1000)
+        ]);
         if(result.error)throw result.error;
+        if(setResult.error)throw setResult.error;
         setCheckins((result.data||[]) as TrainingCheckin[]);
-      }else setCheckins([]);
+        setSetLogs((setResult.data||[]).map(r=>({...r,load_kg:r.load_kg===null?null:Number(r.load_kg)})) as ExerciseSetLog[]);
+      }else{setCheckins([]);setSetLogs([]);}
       setIsError(false);
     }catch(err){notice('Não foi possível consultar o plano na nuvem: '+(err instanceof Error?err.message:'falha inesperada'),true)}
     finally{setLoading(false)}
   },[userId]);
   useEffect(()=>{void load()},[load]);
+  const refreshSetLogs=useCallback(async()=>{
+    if(!plan)return;
+    const client=createClient();
+    const {data,error}=await client.from('training_set_logs')
+      .select('id,plan_id,week_number,session_index,exercise_id,set_number,repetitions,duration_minutes,load_kg,effort_rpe,recorded_at')
+      .eq('user_id',userId).eq('plan_id',plan.id)
+      .order('recorded_at',{ascending:false}).limit(1000);
+    if(error)throw error;
+    setSetLogs((data||[]).map(r=>({...r,load_kg:r.load_kg===null?null:Number(r.load_kg)})) as ExerciseSetLog[]);
+  },[plan,userId]);
   const planValid=useMemo(()=>{
     if(!plan)return false;
     const b=plan.blueprint;
@@ -81,7 +100,7 @@ export default function TrainingPlanner({userId}:Props){
       const {data,error}=await client.from('training_plans').insert({user_id:userId,blueprint}).select('id,blueprint,created_at').single();
       if(error)throw error;
       if(!data?.id)throw new Error('O Supabase não confirmou o novo plano.');
-      setPlan(data as StoredPlan);setCheckins([]);setWeek(1);setEditing(false);
+      setPlan(data as StoredPlan);setCheckins([]);setSetLogs([]);setWeek(1);setEditing(false);
       notice('Plano de quatro semanas salvo na sua conta. Revise os exercícios e adapte ao seu conforto.');
       window.scrollTo({top:0,behavior:'smooth'});
     }catch(err){notice('O plano não foi confirmado na nuvem: '+(err instanceof Error?err.message:'erro inesperado'),true)}
@@ -114,7 +133,7 @@ export default function TrainingPlanner({userId}:Props){
       if(result.error)throw result.error;
       const assess=await client.from('training_assessments').delete().eq('user_id',userId);
       if(assess.error)throw assess.error;
-      setPlan(null);setCheckins([]);setAssessment(initial);setConsent(false);setWeek(1);setEditing(true);
+      setPlan(null);setCheckins([]);setSetLogs([]);setAssessment(initial);setConsent(false);setWeek(1);setEditing(true);
       notice('Avaliação, planos e conclusões removidos da sua conta.');
     }catch(err){notice('Não foi possível concluir a exclusão remota: '+(err instanceof Error?err.message:'erro inesperado'),true)}
     finally{setBusy(false)}
@@ -128,9 +147,9 @@ export default function TrainingPlanner({userId}:Props){
         <Link href="/" className="pl-brand">TRANSFORMA<span>360</span></Link>
       </header>
       <div className="pl-hero">
-        <span className="pl-eyebrow"><Sparkles size={15}/> PLANEJAMENTO INTELIGENTE • FASE 3.3</span>
+        <span className="pl-eyebrow"><Sparkles size={15}/> PLANEJAMENTO INTELIGENTE • FASE 3.3.1</span>
         <h1>Seu treino. Seu ritmo.<br/><em>Um plano para evoluir.</em></h1>
-        <p>Organize uma rotina de quatro semanas com base nas suas escolhas e acompanhe a consistência. Sem promessas irreais, sem dados inventados.</p>
+        <p>Organize quatro semanas, registre cada série, carga e esforço percebido e acompanhe sua evolução real. Sem promessas irreais, sem dados inventados.</p>
         <div className="pl-hero-stats">
           <span><ShieldAlert size={16}/> Triagem antes do plano</span><span><CalendarDays size={16}/> 4 semanas</span><span><LockKeyhole size={16}/> Dados privados</span>
         </div>
@@ -172,7 +191,9 @@ export default function TrainingPlanner({userId}:Props){
             return <article className="pl-panel pl-day" key={d.index}>
               <div className="pl-day-header"><div><span className="pl-kicker">SESSÃO {String(d.index+1).padStart(2,'0')}</span><h3>{d.title}</h3><p>{d.focus} · até {d.duration} min disponíveis</p></div>{done?<span className="pl-done"><CheckCircle2 size={16}/> Concluída</span>:<span className="pl-pending">Pendente</span>}</div>
               <p className="pl-note"><Info size={16}/>{d.warmup}</p>
-              <div className="pl-exercise-list">{d.exercises.map((ex,j)=><div className="pl-exercise" key={ex.id}><span className="pl-count">{j+1}</span><div><strong>{ex.name}</strong><small>{ex.tip}</small></div><div className="pl-exercise-meta"><b>{ex.sets} × {ex.reps}</b><small>{ex.restSeconds>0?'Descanso '+ex.restSeconds+'s':'Ritmo confortável'}</small></div></div>)}</div>
+              <ExerciseTracker key={plan.id+'-'+week+'-'+d.index} userId={userId}
+                planId={plan.id} week={week} sessionIndex={d.index}
+                exercises={d.exercises} logs={setLogs} onChanged={refreshSetLogs}/>
               <p className="pl-recommendation"><Sparkles size={16}/>{recommendationForSession(checkins,d.index,week)}</p>
               <div className="pl-complete"><span>{done?'Esforço registrado: '+({leve:'Leve',adequado:'Adequado',dificil:'Difícil'} as const)[done.effort]:'Concluiu? Registre como foi a sessão:'}</span><div className="pl-effort-buttons">{(['leve','adequado','dificil'] as const).map(eff=><button key={eff} type="button" disabled={busy} className={done?.effort===eff?'chosen':''} onClick={()=>void markSession(d.index,eff)}>{eff==='leve'?'Leve':eff==='adequado'?'Adequado':'Difícil'}{done?.effort===eff&&<Check size={14}/>}</button>)}</div></div>
             </article>
