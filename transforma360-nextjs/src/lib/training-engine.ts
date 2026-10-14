@@ -49,7 +49,7 @@ export type TrainingCheckin = {
   id: string;
   session_index: number;
   week_number: number;
-  effort: 'leve' | 'adequado' | 'dificil';
+  effort: 'leve' | 'adequado' | 'dificil' | 'nao_informado';
   completed_at: string;
 };
 
