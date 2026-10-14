@@ -60,3 +60,12 @@ Segurança: RLS ativa, 4 políticas explícitas (SELECT, INSERT, UPDATE e DELETE
 ## Próximas evoluções
 
 Revisão dos exercícios por educador físico credenciado, inclusão de registros por exercício/carga/RIR/RPE com validação, adequação de treinamento conforme adaptação individual, notificações e integração da programação ao histórico manual. Separar claramente conteúdo educativo do atendimento por profissionais.
+
+## Teste real inicial da Fase 3.3 — verificado
+
+- Usuário informou que concluiu o fluxo de avaliação e geração de plano na interface.
+- Consulta independente ao Supabase confirmou **1 avaliação**, **1 plano** com `blueprint.version = 1` e número de sessões dentro dos limites previstos, e **4 check-ins** persistidos no banco.
+- Integridade: plano vinculado a conta existente no Supabase Auth, e todos os quatro check-ins vinculados ao mesmo dono de seu plano.
+- A conferência foi feita por contagens agregadas e não expôs conteúdo pessoal das respostas.
+- Essa verificação confirma persistência na nuvem, mas não atesta se a pessoa executou fisicamente os treinos ou se exercícios e progressão foram revisados por profissional habilitado.
+- Próximo QA: revisar separação entre conta A e B na interface da Fase 3.3, reavaliação, progressão após semanas distintas e exclusão segura; posteriormente revisão técnica das propostas por profissional de educação física.
