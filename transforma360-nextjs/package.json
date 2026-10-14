@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test:training": "node scripts/test-training-engine.mjs && node scripts/test-exercise-history.mjs",
+    "test:training": "node scripts/test-training-engine.mjs && node scripts/test-exercise-history.mjs && node scripts/test-premium-planner.mjs",
     "lint": "eslint ."
   },
   "dependencies": {
