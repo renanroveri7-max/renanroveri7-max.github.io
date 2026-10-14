@@ -115,13 +115,13 @@ function makeExercise(m:Movement,index:number,a:TrainingAssessment):ExerciseSugg
     restSeconds:isTimed?0:isCore?45:isStart?75:90,
     tip:c.tip};
 }
-const sequences:Movement[][]={
+const sequences:Record<number,Movement[][]>={
   1: [['agachar','empurrar','puxar','core']],
   2: [['agachar','empurrar','puxar','core'],['quadril','puxar','ombros','core']],
   3: [['agachar','empurrar','puxar','core'],['quadril','puxar','ombros','core'],['agachar','quadril','empurrar','core']],
   4: [['empurrar','puxar','ombros','core'],['agachar','quadril','core','cardio'],['puxar','empurrar','ombros','core'],['quadril','agachar','core','cardio']],
   5: [['empurrar','puxar','ombros','core'],['agachar','quadril','core'],['puxar','empurrar','ombros','core'],['quadril','agachar','core'],['cardio','mobilidade']]
-} as unknown as Record<number,Movement[][]>;
+};
 
 const labels:Record<number,string[]>={
   1:['Corpo inteiro A'],
