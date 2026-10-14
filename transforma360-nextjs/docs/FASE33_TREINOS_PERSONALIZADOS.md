@@ -69,3 +69,10 @@ Revisão dos exercícios por educador físico credenciado, inclusão de registro
 - A conferência foi feita por contagens agregadas e não expôs conteúdo pessoal das respostas.
 - Essa verificação confirma persistência na nuvem, mas não atesta se a pessoa executou fisicamente os treinos ou se exercícios e progressão foram revisados por profissional habilitado.
 - Próximo QA: revisar separação entre conta A e B na interface da Fase 3.3, reavaliação, progressão após semanas distintas e exclusão segura; posteriormente revisão técnica das propostas por profissional de educação física.
+
+## QA de isolamento entre duas contas reais — confirmado
+
+- Usuário testou a rota `/app/plano` com uma segunda conta e confirmou que **não aparecem a avaliação, o plano nem as sessões da primeira conta**.
+- Consulta agregada independente no Supabase: **2 contas**, das quais **1 possui plano** e **1 não possui dados de avaliação/plano/check-ins**. Total no momento da verificação: **1 avaliação, 1 plano e 4 check-ins**.
+- Em conjunto com a auditoria RLS transacional anterior, essa é uma validação positiva da separação dos dados, mas não substitui pentest ou auditoria completa antes da comercialização.
+- Pendência técnica observada: `auth_leaked_password_protection` (WARN) no Security Advisor do Supabase. Ativar proteção contra senhas comprometidas quando disponível e revisar exigências legais de dados de saúde/LGPD.
