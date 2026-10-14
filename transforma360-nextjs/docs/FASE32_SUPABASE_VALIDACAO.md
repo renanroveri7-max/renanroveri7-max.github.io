@@ -80,3 +80,10 @@ Nunca inserir `service_role` ou `sb_secret_` em arquivos do GitHub, mensagens ou
 - Consulta no PostgreSQL por associação de `user_id`: **1 conta com registros** (perfil, treino, refeição, pesagem, hidratação) e **1 conta sem nenhum desses registros**.
 - Em conjunto com o teste SQL transacional RLS (SELECT/INSERT/UPDATE/DELETE entre duas identidades simuladas), o isolamento básico está validado; ainda não equivale a auditoria de segurança ou teste de invasão completo.
 - **Pendências**: recuperação de senha ponta a ponta com email, checklist de privacidade/LGPD, proteção contra senhas vazadas, acessibilidade pública da Vercel e testes de produção.
+
+## SMTP profissional com Resend — verificação de usuário (13/10/2026)
+
+- Usuário verificou no painel Resend o domínio `mail.renanroveri.com.br`: domínio, DKIM e os 2 CNAMEs de envio aparecem como `Verified`.
+- Usuário configurou o SMTP do Resend no painel Supabase e relatou que o teste posterior **funcionou**. O app já trata limitações SMTP com mensagem compreensível em português (commit `bad6b2aaa0d9e3e0e0ac1f547deae16b087db471`).
+- Logs de Auth mostram eventos de recuperação de senha, mas a conexão consultada não confirmou de forma independente que uma nova senha foi definida e utilizada para login. Não tratar teste de recuperação ponta a ponta como concluído sem confirmação explícita.
+- Para lançamento comercial ainda faltam proteção contra senhas vazadas (aviso atual do Security Advisor), política LGPD/consentimento/exclusão, configuração de limites e antiabuso dos emails e revisão da proteção do deploy Vercel.
