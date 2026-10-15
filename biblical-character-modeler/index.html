@@ -200,8 +200,8 @@ function render(){
 function attempt(fn){if(busy)return;busy=true;error="";message="";Promise.resolve().then(fn).catch(function(e){error=e&&e.message||"Erro inesperado";}).finally(function(){busy=false;render();});}
 document.addEventListener("click",function(e){
  if(e.target.id==="overlay"){modal=null;render();return;}
- var el=e.target.closest("[data-page],[data-action],[data-cat-action],[data-cat-filter],[data-cat-record],[data-ficha-action],[data-ficha-id],[data-model-action],[data-prompt-action],[data-prompt-filter],[data-prompt-open],[data-prompt-copy],[data-prod-id],[data-prod-action],[data-connector-check],[data-flow-action],[data-flow-view],[data-flow-download]");if(!el)return;
- if(el.hasAttribute("data-flow-action")||el.hasAttribute("data-flow-view")||el.hasAttribute("data-flow-download")){
+ var el=e.target.closest("[data-page],[data-action],[data-cat-action],[data-cat-filter],[data-cat-record],[data-ficha-action],[data-ficha-id],[data-model-action],[data-prompt-action],[data-prompt-filter],[data-prompt-open],[data-prompt-copy],[data-prod-id],[data-prod-action],[data-connector-check],[data-flow-action],[data-flow-view],[data-flow-download],[data-flow-file]");if(!el)return;
+ if(el.hasAttribute("data-flow-action")||el.hasAttribute("data-flow-view")||el.hasAttribute("data-flow-download")||el.hasAttribute("data-flow-file")){
   var r=catalog&&catalog.records.find(function(v){return v.id_tecnico===flowSelectedId;});
   if(el.hasAttribute("data-flow-view")){
    var viewId=el.dataset.flowView,entry=flowImports.find(function(v){return v.id===viewId&&v.recordId===flowSelectedId;});
@@ -222,9 +222,43 @@ document.addEventListener("click",function(e){
     message="Download solicitado: "+entry.filename;
    });return;
   }
+  if(el.dataset.flowAction==="folder-select"){
+   if(!window.BCMFolder.available()){error="Seleção de pasta indisponível neste Chrome.";render();return;}
+   let picked;
+   try{picked=window.BCMFolder.selectDirectory();}catch(e){error=e.message||String(e);render();return;}
+   attempt(async function(){
+    const handle=await picked;
+    if(!handle)return;
+    await req("settings","readwrite",store=>store.put({key:"flowDownloadDirectory",value:handle}));
+    window.BCMFolder.setHandle(handle);
+    flowFolderList=null;
+    message="Pasta "+handle.name+" autorizada e lembrada neste navegador. Clique em BUSCAR IMAGENS DA PASTA. Nenhum arquivo foi lido nem importado.";
+   });return;
+  }
+  if(el.dataset.flowAction==="folder-scan"){
+   let permission;
+   try{permission=window.BCMFolder.authorize();}catch(e){error=e.message||String(e);render();return;}
+   attempt(async function(){
+    if(await permission!=="granted")throw Error("Acesso à pasta recusado. Use IMPORTAR IMAGEM GERADA como alternativa.");
+    flowFolderList=await window.BCMFolder.scan();
+    message="Leitura concluída. Escolha uma imagem da lista para visualizar e confirme a identidade antes de salvar.";
+   });return;
+  }
   if(el.dataset.flowAction==="discard-capture"){clearFlowCapture();message="Prévia descartada sem salvamento.";render();return;}
   if(el.dataset.flowAction==="clear-preview"){window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;render();return;}
   if(!r)return;
+  if(el.hasAttribute("data-flow-file")){
+   const wanted=el.dataset.flowFile;
+   attempt(async function(){
+    const projectId=activeId,selected=r.id_tecnico;
+    const file=await window.BCMFolder.getFile(wanted);
+    const dims=await window.BCMFlow.validateImage(file);
+    if(activeId!==projectId||flowSelectedId!==selected)throw Error("O personagem ou projeto mudou antes da prévia.");
+    clearFlowCapture();
+    flowCaptureDraft={file,url:URL.createObjectURL(file),width:dims.width,height:dims.height,recordId:selected,projectId,origin:"authorized-download-folder"};
+    message="Imagem baixada selecionada: "+file.name+". Confira a PRÉVIA e a fase. O arquivo ainda não foi salvo.";
+   });return;
+  }
   var check=window.BCMFlow.validSelection(r,catalog,fichasBundle,promptBundle,modelsSaved);
   if(!check.ok){error=check.reason;render();return;}
   if(el.dataset.flowAction==="capture"){
@@ -247,13 +281,15 @@ document.addEventListener("click",function(e){
   if(el.dataset.flowAction==="confirm-capture"){
    const draft=flowCaptureDraft;
    if(!draft||draft.projectId!==activeId||draft.recordId!==r.id_tecnico){error="O arquivo de prévia não corresponde à seleção atual.";render();return;}
-   if(!confirm("CONFIRMAR: esta prévia corresponde a "+r.nome+" — "+(r.fase||"sem fase")+" (ID "+r.id_original+")? O arquivo será salvo como PENDENTE DE AUDITORIA e não é o original do Flow."))return;
+   if(!confirm("CONFIRMAR: esta imagem corresponde a "+r.nome+" — "+(r.fase||"sem fase")+" (ID "+r.id_original+")? Ela será salva como PENDENTE DE AUDITORIA. O sistema não verificou automaticamente a origem do arquivo."))return;
    attempt(async function(){
     const projectId=activeId,recordId=r.id_tecnico;
     const prepared=await window.BCMFlow.prepareImport(draft.file,r,active(),catalog,fichasBundle,promptBundle,modelsSaved);
     if(activeId!==projectId||flowSelectedId!==recordId||flowCaptureDraft!==draft)throw Error("Seleção ou captura mudou antes do salvamento.");
-    prepared.metadata.source="flow-visible-canvas-preview";
+    prepared.metadata.source=draft.origin==="authorized-download-folder"?"authorized-download-folder":"flow-visible-canvas-preview";
     prepared.metadata.isOriginalFile=false;
+    prepared.metadata.unmodifiedLocalDownload=draft.origin==="authorized-download-folder";
+    prepared.metadata.sourceNotVerified=true;
     await saveFlowImage(prepared);
     const entry=await req("flowImports","readonly",x=>x.get(prepared.metadata.id));
     const asset=await req("flowAssets","readonly",x=>x.get(prepared.metadata.id));
@@ -261,7 +297,7 @@ document.addEventListener("click",function(e){
     flowImports=await req("flowImports","readonly",x=>x.index("byProject").getAll(projectId));
     clearFlowCapture();
     flowPreviewId=entry.id;flowPreviewURL=window.BCMFlow.retainUrl(entry.id,asset.blob);
-    message="Prévia salva para "+r.nome+" ("+(r.fase||r.id_original)+"), PENDENTE DE AUDITORIA. Não equivale ao arquivo original do Flow.";
+    message="Imagem salva para "+r.nome+" ("+(r.fase||r.id_original)+"), PENDENTE DE AUDITORIA. Identidade confirmada manualmente; origem Flow não verificada automaticamente.";
    });return;
   }
   if(el.dataset.flowAction==="prefill"){
@@ -573,6 +609,10 @@ openDb().then(async function(){
  await restorePrompts();
  await restoreProduction();
  await restoreFlow();
+ try{
+  const savedDirectory=await req("settings","readonly",st=>st.get("flowDownloadDirectory"));
+  if(savedDirectory&&savedDirectory.value)window.BCMFolder.setHandle(savedDirectory.value);
+ }catch(e){/* sem permissão/suporte: importação manual ainda funciona */}
  render();
 }).catch(function(e){error="O IndexedDB não abriu: "+(e.message||e);render();});
 })();
