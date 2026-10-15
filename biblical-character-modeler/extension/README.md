@@ -1,22 +1,21 @@
-# Biblical Modeler — Google Flow Bridge v0.3.0
+# Biblical Character Modeler — Flow Bridge v0.4.0
 
-Extensão experimental para testar a comunicação entre o Biblical Character Modeler e uma guia aberta do Google Flow na sua sessão normal do Chrome.
+Extensão experimental Chrome Manifest V3. Funciona apenas no domínio do Biblical Character Modeler, em comunicação com uma guia já aberta do Google Flow.
 
-## Atualização da extensão
+## Atualização
 
-1. Baixe e extraia o ZIP 0.3.0 para uma pasta permanente.
-2. Em `chrome://extensions`, desative ou remova a Flow Bridge anterior.
-3. Ative o Modo do desenvolvedor e clique em **Carregar sem compactação**.
-4. Selecione a pasta que contém `manifest.json` da versão 0.3.0.
-5. Atualize o Biblical Modeler com Ctrl + F5; na aba **Google Flow**, clique em **TESTAR EXTENSÃO**. O painel deve responder versão 0.3.0.
+1. Extraia o ZIP 0.4.0 para uma pasta permanente.
+2. Vá a `chrome://extensions`, remova/desative a versão antiga e ative **Modo do desenvolvedor**.
+3. Clique **Carregar sem compactação**, apontando para a pasta que contém `manifest.json`.
+4. No Biblical Character Modeler, pressione **Ctrl+F5**. Entre na aba Google Flow e clique **TESTAR EXTENSÃO**; deve aparecer 0.4.0.
 
-## Prova de envio direto do prompt (não gera imagens)
+## Diagnóstico sem consumir créditos
 
-1. Abra um único projeto em `flow.google.com` e deixe vazio o campo inferior do compositor de imagens.
-2. Selecione **Jeremias — Jovem (JER-001)** no catálogo do Biblical Modeler.
-3. Clique **TESTAR ENVIO DIRETO DO PROMPT (NÃO GERA)** e confirme a ação.
-4. Verifique visualmente se o texto completo apareceu no campo de criação do Flow. Não clique em Gerar nesta etapa.
+1. Abra **uma única guia** do Google Flow, dentro do seu projeto.
+2. No nosso aplicativo, clique **MAPEAR IMAGENS**. Anote a quantidade inicial de mídias grandes detectadas.
+3. Para uma comparação posterior, depois de criar uma imagem no Flow **por sua própria escolha**, retorne ao site e clique novamente em **MAPEAR IMAGENS** (com o resultado visível na guia Flow).
+4. O painel compara as contagens. Caso permaneçam idênticas, isso **não prova** falta de resultados, pois o Flow pode exibir imagens por outros mecanismos ou fora da área visível.
 
-A extensão identifica **um único** editor contenteditable visível na região inferior-central. Ela recusa sobrescrever campos com conteúdo, limita o texto a 35 mil caracteres e utiliza somente um comando de inserção de texto do navegador. Não lê cookies, tokens, senhas, URLs privadas, imagens ou conteúdo anterior ao teste; **não clica em Gerar**, não consome créditos e não utiliza APIs privadas. Se o campo não estiver no formato esperado, o teste falhará sem tentar o envio.
+**A extensão não clica em Gerar, não usa créditos, não lê conteúdos de prompts, não devolve fotos, não acessa cookies/tokens e não chama endpoints internos.** Os resultados são apenas quantidade, posição, dimensão e classe de origem (https/blob/data) de elementos renderizados. URLs das imagens nunca são transmitidas. Não representa integração completa nem confirma viabilidade de recuperação de mídia original.
 
-**Limite:** o preenchimento do campo não comprova que uma geração automatizada usando os créditos Ultra ou o retorno automático de imagens são suportados. O teste precisa ser validado no navegador do usuário.
+O envio direto de prompt da versão 0.3.0 continua disponível: ele exige confirmação e campo vazio, e não inicia geração.
