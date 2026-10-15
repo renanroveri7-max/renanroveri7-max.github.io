@@ -112,7 +112,7 @@ function productionHtml(){
  var msg=connectorStatus
  ? '<p><b>Resposta do servidor:</b> '+(connectorStatus.online?'ONLINE':'INATIVO')+' · Gemini API '+(connectorStatus.providerKeyConfigured?'configurada':'sem chave')+' · Controle de acesso '+(connectorStatus.studioAccessConfigured?'configurado':'não configurado')+' · Geração '+(connectorStatus.generationEnabled?'habilitada':'desabilitada')+'.</p>'
  : '<p>Teste a disponibilidade do backend antes de configurar a geração real.</p>';
- return heading("PREPARAÇÃO DE PRODUÇÃO","Estação de Geração — Pré-voo","Verificação de ficha, prompt e referência visual antes da integração com o gerador.","<span class='badge'>PRODUÇÃO WEB 0.6.2 — CONEXÃO</span>")+
+ return heading("PREPARAÇÃO DE PRODUÇÃO","Estação de Geração — Pré-voo","Verificação de ficha, prompt e referência visual antes da integração com o gerador.","<span class='badge'>PRODUÇÃO WEB 0.6.4 — CONEXÃO</span>")+
  '<section class="prod-note"><b>Conector Google Gemini API — diagnóstico sem custos</b><div style="margin:12px 0"><button class="mini" data-connector-check="1">VERIFICAR CONEXÃO DO SERVIDOR</button></div>'+msg+'<small>A geração real continua bloqueada. Nenhuma chave será exibida no navegador.</small></section>'+
  window.BCMProduction.html(active(),catalog,fichasBundle,promptBundle,modelsSaved,productionBundle,productionId);
 }
@@ -129,7 +129,7 @@ function modalHtml(){
 function render(){
  var a=active(), current=NAV.find(function(p){return p[1]===page;});
  root().className="";
- root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.6.2</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():page==="research"?fichasHtml():page==="models"?modelsHtml():page==="prompts"?promptsHtml():page==="production"?productionHtml():coming())+'</div><footer class="footer">Fundação + Catálogo + Fichas + Modelos + Prompts + Preparação · IA ainda não conectada</footer></main></div>'+modalHtml();
+ root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.6.4</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():page==="research"?fichasHtml():page==="models"?modelsHtml():page==="prompts"?promptsHtml():page==="production"?productionHtml():coming())+'</div><footer class="footer">Fundação + Catálogo + Fichas + Modelos + Prompts + Preparação · IA ainda não conectada</footer></main></div>'+modalHtml();
  if(modal)document.querySelector('[name="name"]').focus();
 }
 function attempt(fn){if(busy)return;busy=true;error="";message="";Promise.resolve().then(fn).catch(function(e){error=e&&e.message||"Erro inesperado";}).finally(function(){busy=false;render();});}
@@ -140,15 +140,15 @@ document.addEventListener("click",function(e){
   attempt(async function(){
    var result;
    try{
-    result=await fetch("https://renanroveri7-max-github-io.vercel.app/api/bcm-status",{method:"GET",mode:"cors",credentials:"omit",cache:"no-store",headers:{"Accept":"application/json"}});
+    result=await fetch("https://biblical-character-modeler-api.vercel.app/api/bcm-status",{method:"GET",mode:"cors",credentials:"omit",cache:"no-store",headers:{"Accept":"application/json"}});
    }catch(networkError){
     throw Error("Falha ao consultar a Vercel. Possíveis causas: proteção de acesso, CORS ou bloqueio de rede. A produção continua bloqueada.");
    }
-   if(!result.ok)throw Error("O backend da Vercel retornou HTTP "+result.status+". Verifique a função e a proteção do projeto. Nenhuma geração foi iniciada.");
+   if(!result.ok)throw Error("O backend dedicado retornou HTTP "+result.status+". Verifique a função e a proteção do projeto. Nenhuma geração foi iniciada.");
    var kind=result.headers.get("content-type")||"";
    if(!kind.includes("application/json"))throw Error("A Vercel não devolveu JSON da API. Pode estar redirecionando para autenticação.");
    var info=await result.json();
-   if(!info||info.service!=="biblical-character-modeler"||info.api!=="diagnostic-v0.6.2")throw Error("A resposta do servidor não corresponde ao conector esperado.");
+   if(!info||info.service!=="biblical-character-modeler"||info.api!=="diagnostic-v0.6.4")throw Error("A resposta do servidor não corresponde ao conector esperado.");
    connectorStatus=info;
    message="Diagnóstico respondido pelo servidor. Geração de imagens permanece desabilitada até configuração segura.";
   });return;
