@@ -1,32 +1,22 @@
-# Biblical Character Modeler — Google Flow Bridge v0.2.0
+# Biblical Modeler — Google Flow Bridge v0.3.0
 
-## Objetivo desta prova de conceito
+Extensão experimental para testar a comunicação entre o Biblical Character Modeler e uma guia aberta do Google Flow na sua sessão normal do Chrome.
 
-Testar uma conexão local entre o Biblical Character Modeler e uma guia já aberta do Google Flow na sua conta Google.
+## Atualização da extensão
 
-Nesta versão, os botões disponíveis no aplicativo são:
-- **TESTAR EXTENSÃO**: confirma a presença da extensão 0.2.0.
-- **DETECTAR FLOW**: verifica se existe uma guia do Flow.
-- **ABRIR / FOCAR FLOW**: abre uma guia ou foca uma existente.
-- **INSPECIONAR FLOW**: verifica a disponibilidade de elementos.
-- **MAPEAR COMPOSITOR**: somente leitura; classifica metadados dos campos editáveis, posição relativa na tela e contagem de botões na região inferior.
+1. Baixe e extraia o ZIP 0.3.0 para uma pasta permanente.
+2. Em `chrome://extensions`, desative ou remova a Flow Bridge anterior.
+3. Ative o Modo do desenvolvedor e clique em **Carregar sem compactação**.
+4. Selecione a pasta que contém `manifest.json` da versão 0.3.0.
+5. Atualize o Biblical Modeler com Ctrl + F5; na aba **Google Flow**, clique em **TESTAR EXTENSÃO**. O painel deve responder versão 0.3.0.
 
-As informações são lidas localmente na guia via API `chrome.scripting.executeScript`. O código **não extrai valores de campos, prompts digitados, URL de projetos, cookies, credenciais, imagens nem conteúdos da conta**.
+## Prova de envio direto do prompt (não gera imagens)
 
-## Como atualizar a extensão já instalada
+1. Abra um único projeto em `flow.google.com` e deixe vazio o campo inferior do compositor de imagens.
+2. Selecione **Jeremias — Jovem (JER-001)** no catálogo do Biblical Modeler.
+3. Clique **TESTAR ENVIO DIRETO DO PROMPT (NÃO GERA)** e confirme a ação.
+4. Verifique visualmente se o texto completo apareceu no campo de criação do Flow. Não clique em Gerar nesta etapa.
 
-1. Extraia o ZIP novo em uma pasta diferente da versão antiga.
-2. Abra `chrome://extensions`.
-3. Desative/remova a extensão Flow Bridge v0.1.0, para não haver duas pontes recebendo mensagens.
-4. Ative **Modo do desenvolvedor**, se necessário.
-5. Clique **Carregar sem compactação** e selecione a pasta que contém o arquivo `manifest.json` da nova versão.
-6. Atualize nosso aplicativo com Ctrl + F5.
-7. Deixe **uma única guia** do Google Flow aberta, já dentro de um projeto. Nenhuma geração deve ser iniciada neste teste.
-8. Na aba **Google Flow** do nosso site, clique em **TESTAR EXTENSÃO**, depois **MAPEAR COMPOSITOR**.
-9. Envie um print dos resultados, sem digitar dados sensíveis na interface do Flow.
+A extensão identifica **um único** editor contenteditable visível na região inferior-central. Ela recusa sobrescrever campos com conteúdo, limita o texto a 35 mil caracteres e utiliza somente um comando de inserção de texto do navegador. Não lê cookies, tokens, senhas, URLs privadas, imagens ou conteúdo anterior ao teste; **não clica em Gerar**, não consome créditos e não utiliza APIs privadas. Se o campo não estiver no formato esperado, o teste falhará sem tentar o envio.
 
-## Escopo e limitações
-
-A extensão não gera imagens, não cria projetos, não submete prompts, não recupera mídia automaticamente e não promete usar os créditos de assinatura Ultra por API. Não utiliza endpoints privados ou engenharia reversa de autenticação. O mapeamento apenas indica onde estão os controles acessíveis via DOM, como próxima evidência técnica.
-
-Se o Google modificar a interface, a detecção visual poderá mudar; esta versão nunca aciona botões de geração.
+**Limite:** o preenchimento do campo não comprova que uma geração automatizada usando os créditos Ultra ou o retorno automático de imagens são suportados. O teste precisa ser validado no navegador do usuário.
