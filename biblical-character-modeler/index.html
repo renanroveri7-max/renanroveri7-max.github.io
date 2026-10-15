@@ -9,7 +9,7 @@
 (function(){
 "use strict";
 var NAV=[["Visão Geral","overview","▦","ESTÚDIO"],["Projetos","projects","▱","ESTÚDIO"],["Catálogo","catalog","▤","GESTÃO & CATÁLOGO"],["Fases","phases","♧","GESTÃO & CATÁLOGO"],["Pesquisa & Fichas","research","◈","GESTÃO & CATÁLOGO"],["Modelos Fixos","models","♙","ESTÚDIO VISUAL"],["Prompts","prompts","⌘","ESTÚDIO VISUAL"],["Produção","production","▣","PIPELINE"],["Google Flow","flow","✧","PIPELINE"],["Auditoria","audit","✧","PIPELINE"],["Exportação","export","⇧","PIPELINE"],["Configurações","settings","⚙","SISTEMA"]];
-var db=null,projects=[],activeId=null,page="overview",modal=null,error="",message="",busy=false,catalog=null,catalogPreview=null,catFilter="all",catSearch="",catSelectedId=null,catFile=null,fichasBundle=null,fichaSelectedId=null,fichaSearch="",modelsSaved={individual:null,group:null},modelDraft={individual:null,group:null},promptBundle=null,promptSelectedId=null,promptFilter="all",promptSearch="",productionBundle=null,productionId=null,connectorStatus=null,flowImports=[],flowSelectedId=null,flowPreviewId=null,flowPreviewURL=null;
+var db=null,projects=[],activeId=null,page="overview",modal=null,error="",message="",busy=false,catalog=null,catalogPreview=null,catFilter="all",catSearch="",catSelectedId=null,catFile=null,fichasBundle=null,fichaSelectedId=null,fichaSearch="",modelsSaved={individual:null,group:null},modelDraft={individual:null,group:null},promptBundle=null,promptSelectedId=null,promptFilter="all",promptSearch="",productionBundle=null,productionId=null,connectorStatus=null,flowImports=[],flowSelectedId=null,flowPreviewId=null,flowPreviewURL=null,flowCaptureDraft=null;
 function safe(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function root(){return document.getElementById("root");}
 function active(){return projects.find(function(p){return p.id===activeId;})||null;}
@@ -116,14 +116,31 @@ function productionHtml(){
  '<section class="prod-note"><b>Conector Google Gemini API — diagnóstico sem custos</b><div style="margin:12px 0"><button class="mini" data-connector-check="1">VERIFICAR CONEXÃO DO SERVIDOR</button></div>'+msg+'<small>A geração real continua bloqueada. Nenhuma chave será exibida no navegador.</small></section>'+
  window.BCMProduction.html(active(),catalog,fichasBundle,promptBundle,modelsSaved,productionBundle,productionId);
 }
+function clearFlowCapture(){
+ if(flowCaptureDraft&&flowCaptureDraft.url)URL.revokeObjectURL(flowCaptureDraft.url);
+ flowCaptureDraft=null;
+}
 async function restoreFlow(){
+ clearFlowCapture();
  window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;
  flowImports=activeId?await req("flowImports","readonly",function(s){return s.index("byProject").getAll(activeId);}):[];
  flowSelectedId=catalog&&catalog.records[0]?catalog.records[0].id_tecnico:null;
 }
+function flowCaptureHtml(){
+ const d=flowCaptureDraft;
+ if(!d||d.projectId!==activeId||d.recordId!==flowSelectedId)return "";
+ const r=catalog&&catalog.records.find(x=>x.id_tecnico===d.recordId);
+ if(!r)return "";
+ return '<section class="flow-capture-draft"><h2>PRÉVIA RECEBIDA — AINDA NÃO SALVA</h2>'+
+ '<p>Imagem capturada da visualização do Google Flow. <b>NÃO é garantia do arquivo original.</b> Verifique a identidade e a fase antes de salvar.</p>'+
+ '<p>Destino: <strong>'+safe(r.nome)+'</strong> · Fase '+safe(r.fase||"Não informada")+' · ID '+safe(r.id_original)+' · '+d.width+' × '+d.height+' px</p>'+
+ '<img src="'+safe(d.url)+'" alt="Prévia do Flow ainda não vinculada ao personagem">'+
+ '<div class="flow-capture-actions"><button class="btn" data-flow-action="confirm-capture">CONFIRMAR IDENTIDADE E SALVAR PRÉVIA</button>'+
+ '<button class="btn btn-gray" data-flow-action="discard-capture">DESCARTAR SEM SALVAR</button></div></section>';
+}
 function flowHtml(){
- return heading("INTEGRAÇÃO EXPERIMENTAL","Google Flow — Ponte com o Chrome","Testando comunicação com a sessão Flow aberta no seu próprio navegador.","<span class='badge'>FLOW BRIDGE 0.7.4 — RESULTADOS</span>")+
- '<div id="bcm-bridge-placeholder"></div>'+
+ return heading("INTEGRAÇÃO EXPERIMENTAL","Google Flow — Ponte com o Chrome","Testando comunicação com a sessão Flow aberta no seu próprio navegador.","<span class='badge'>FLOW BRIDGE 0.7.5 — CAPTURA EXPERIMENTAL</span>")+
+ '<div id="bcm-bridge-placeholder"></div>'+flowCaptureHtml()+
  window.BCMFlow.pageHtml(active(),catalog,fichasBundle,promptBundle,modelsSaved,flowImports,flowSelectedId,flowPreviewId,flowPreviewURL);
 }
 async function saveFlowImage(prepared){
@@ -159,7 +176,7 @@ function modalHtml(){
 function render(){
  var a=active(), current=NAV.find(function(p){return p[1]===page;});
  root().className="";
- root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.7.4</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():page==="research"?fichasHtml():page==="models"?modelsHtml():page==="prompts"?promptsHtml():page==="production"?productionHtml():page==="flow"?flowHtml():coming())+'</div><footer class="footer">Fundação + Catálogo + Fichas + Modelos + Prompts + Preparação · IA ainda não conectada</footer></main></div>'+modalHtml();
+ root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.7.5</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():page==="research"?fichasHtml():page==="models"?modelsHtml():page==="prompts"?promptsHtml():page==="production"?productionHtml():page==="flow"?flowHtml():coming())+'</div><footer class="footer">Fundação + Catálogo + Fichas + Modelos + Prompts + Preparação · IA ainda não conectada</footer></main></div>'+modalHtml();
  if(page==="flow"&&window.BCMBridge)window.BCMBridge.draw();
  if(modal)document.querySelector('[name="name"]').focus();
 }
@@ -188,10 +205,48 @@ document.addEventListener("click",function(e){
     message="Download solicitado: "+entry.filename;
    });return;
   }
+  if(el.dataset.flowAction==="discard-capture"){clearFlowCapture();message="Prévia descartada sem salvamento.";render();return;}
   if(el.dataset.flowAction==="clear-preview"){window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;render();return;}
   if(!r)return;
   var check=window.BCMFlow.validSelection(r,catalog,fichasBundle,promptBundle,modelsSaved);
   if(!check.ok){error=check.reason;render();return;}
+  if(el.dataset.flowAction==="capture"){
+   if(!window.BCMBridge||typeof window.BCMBridge.capture!=="function"){error="Instale a Flow Bridge v0.5.0 para testar captura.";render();return;}
+   if(!confirm("Teste experimental: tentar obter somente a imagem AMPLIADA e visível no Google Flow. Se funcionar, ela será apresentada para confirmação, SEM salvar automaticamente. Continuar?"))return;
+   attempt(async function(){
+    const projectId=activeId,recordId=r.id_tecnico;
+    const capture=await window.BCMBridge.capture();
+    if(activeId!==projectId||flowSelectedId!==recordId)throw Error("O projeto ou personagem mudou durante a captura.");
+    const blob=await(await fetch(capture.data)).blob();
+    if(blob.size>3*1024*1024)throw Error("Prévia maior que o limite de 3 MB.");
+    const safeId=String(r.id_original||"personagem").replace(/[^a-zA-Z0-9_-]/g,"");
+    const file=new File([blob],"flow-previa-"+safeId+".jpg",{type:"image/jpeg"});
+    const dims=await window.BCMFlow.validateImage(file);
+    clearFlowCapture();
+    flowCaptureDraft={file,url:URL.createObjectURL(file),width:dims.width,height:dims.height,recordId,projectId};
+    message="Prévia obtida! Confira a imagem e confirme sua identidade para salvar no catálogo. Nenhuma geração foi iniciada.";
+   });return;
+  }
+  if(el.dataset.flowAction==="confirm-capture"){
+   const draft=flowCaptureDraft;
+   if(!draft||draft.projectId!==activeId||draft.recordId!==r.id_tecnico){error="O arquivo de prévia não corresponde à seleção atual.";render();return;}
+   if(!confirm("CONFIRMAR: esta prévia corresponde a "+r.nome+" — "+(r.fase||"sem fase")+" (ID "+r.id_original+")? O arquivo será salvo como PENDENTE DE AUDITORIA e não é o original do Flow."))return;
+   attempt(async function(){
+    const projectId=activeId,recordId=r.id_tecnico;
+    const prepared=await window.BCMFlow.prepareImport(draft.file,r,active(),catalog,fichasBundle,promptBundle,modelsSaved);
+    if(activeId!==projectId||flowSelectedId!==recordId||flowCaptureDraft!==draft)throw Error("Seleção ou captura mudou antes do salvamento.");
+    prepared.metadata.source="flow-visible-canvas-preview";
+    prepared.metadata.isOriginalFile=false;
+    await saveFlowImage(prepared);
+    const entry=await req("flowImports","readonly",x=>x.get(prepared.metadata.id));
+    const asset=await req("flowAssets","readonly",x=>x.get(prepared.metadata.id));
+    if(!entry||!asset||!asset.blob||asset.blob.size!==draft.file.size)throw Error("Não consegui confirmar o salvamento da imagem.");
+    flowImports=await req("flowImports","readonly",x=>x.index("byProject").getAll(projectId));
+    clearFlowCapture();
+    flowPreviewId=entry.id;flowPreviewURL=window.BCMFlow.retainUrl(entry.id,asset.blob);
+    message="Prévia salva para "+r.nome+" ("+(r.fase||r.id_original)+"), PENDENTE DE AUDITORIA. Não equivale ao arquivo original do Flow.";
+   });return;
+  }
   if(el.dataset.flowAction==="prefill"){
    if(!window.BCMBridge||typeof window.BCMBridge.prefill!=="function"){
     error="Módulo de integração não disponível. Atualize o aplicativo.";
@@ -364,7 +419,7 @@ document.addEventListener("click",function(e){
  if(action==="create"){modal={id:null};render();return;}
  if(action==="edit"){modal={id:id};render();return;}
  if(action==="select"){attempt(async function(){await req("settings","readwrite",function(s){return s.put({key:"activeProject",value:id});});activeId=id;await restoreCatalog();await restoreFichas();await restorePrompts();await restoreProduction();await restoreFlow();message="Projeto selecionado.";});return;}
- if(action==="delete"){var p=projects.find(function(x){return x.id===id;});if(!p||!confirm('Excluir o projeto "'+p.name+'"? Esta ação não pode ser desfeita.'))return;attempt(async function(){await req("projects","readwrite",function(s){return s.delete(id);});await req("catalogs","readwrite",function(s){return s.delete(id);});await req("fichas","readwrite",function(s){return s.delete(id);});await req("prompts","readwrite",function(s){return s.delete(id);});await req("productionPackets","readwrite",function(s){return s.delete(id);});await deleteFlowProject(id);projects=projects.filter(function(x){return x.id!==id;});if(activeId===id){await req("settings","readwrite",function(s){return s.put({key:"activeProject",value:null});});activeId=null;catalog=null;fichasBundle=null;promptBundle=null;productionBundle=null;productionId=null;flowImports=[];flowSelectedId=null;window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;clearCatalogUi();}message="Projeto excluído.";});}
+ if(action==="delete"){var p=projects.find(function(x){return x.id===id;});if(!p||!confirm('Excluir o projeto "'+p.name+'"? Esta ação não pode ser desfeita.'))return;attempt(async function(){await req("projects","readwrite",function(s){return s.delete(id);});await req("catalogs","readwrite",function(s){return s.delete(id);});await req("fichas","readwrite",function(s){return s.delete(id);});await req("prompts","readwrite",function(s){return s.delete(id);});await req("productionPackets","readwrite",function(s){return s.delete(id);});await deleteFlowProject(id);projects=projects.filter(function(x){return x.id!==id;});if(activeId===id){await req("settings","readwrite",function(s){return s.put({key:"activeProject",value:null});});activeId=null;catalog=null;fichasBundle=null;promptBundle=null;productionBundle=null;productionId=null;flowImports=[];flowSelectedId=null;clearFlowCapture();window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;clearCatalogUi();}message="Projeto excluído.";});}
 });
 document.addEventListener("submit",function(e){
  if(e.target.id==="prompt-notes-form"){
@@ -414,7 +469,7 @@ document.addEventListener("submit",function(e){
   var old=id?projects.find(function(x){return x.id===id;}):null,now=Date.now(),p={id:old?old.id:crypto.randomUUID(),name:name,book:book,createdAt:old?old.createdAt:now,updatedAt:now,schemaVersion:2};
   await req("projects","readwrite",function(s){return s.put(p);});
   projects=old?projects.map(function(x){return x.id===id?p:x;}):[p].concat(projects);
-  if(!old){await req("settings","readwrite",function(s){return s.put({key:"activeProject",value:p.id});});activeId=p.id;catalog=null;fichasBundle=null;promptBundle=null;promptSelectedId=null;productionBundle=null;productionId=null;flowImports=[];flowSelectedId=null;window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;fichaSelectedId=null;fichaSearch="";clearCatalogUi();}
+  if(!old){await req("settings","readwrite",function(s){return s.put({key:"activeProject",value:p.id});});activeId=p.id;catalog=null;fichasBundle=null;promptBundle=null;promptSelectedId=null;productionBundle=null;productionId=null;flowImports=[];flowSelectedId=null;clearFlowCapture();window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;fichaSelectedId=null;fichaSearch="";clearCatalogUi();}
   modal=null;message=old?"Projeto atualizado.":"Projeto criado e selecionado.";
  });
 });
@@ -437,7 +492,7 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
  if(e.target.id==="flow-record"){
-  flowSelectedId=e.target.value;window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;error="";message="";render();return;
+  flowSelectedId=e.target.value;clearFlowCapture();window.BCMFlow.cleanup();flowPreviewId=null;flowPreviewURL=null;error="";message="";render();return;
  }
  if(e.target.id==="flow-result-file"){
   var image=e.target.files&&e.target.files[0];
