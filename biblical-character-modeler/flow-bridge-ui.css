@@ -1,0 +1,15 @@
+/* Extensão do Chrome — diagnóstico do Google Flow, teste v0.7.1 */
+.flow-bridge-panel{border:1px solid #6251ac;border-radius:15px;padding:23px;background:linear-gradient(160deg,#24203d,#131b32 70%);margin-bottom:22px}
+.flow-bridge-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;flex-wrap:wrap}
+.flow-bridge-head h2{margin:0;font-size:16px;color:#fff;letter-spacing:.3px}
+.flow-bridge-head p{color:#b0bfdc;font-size:12px;line-height:1.65;margin:9px 0 0}
+.flow-bridge-buttons{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
+.flow-bridge-buttons .btn{font-size:11px}
+.flow-bridge-stats{padding:13px 17px;border:1px solid #3a4366;border-radius:10px;background:#121930}
+.flow-bridge-stats p{font-size:12px;color:#b7c9e4;margin:8px 0;line-height:1.6}
+.flow-bridge-stats b{color:#f1f4ff}
+.flow-bridge-error{background:#482332;border:1px solid #9e4253;color:#ffcedb;padding:13px;border-radius:8px;font-size:12px}
+.flow-bridge-disclaimer,.flow-bridge-install{color:#a5b6d1;font-size:11px;line-height:1.75;margin:14px 0 0}
+.flow-bridge-install a{color:#b1a7ff}
+.flow-bridge-install code{color:#d8d2ff}
+@media(max-width:700px){.flow-bridge-panel{padding:15px}.flow-bridge-buttons .btn{width:100%}}
