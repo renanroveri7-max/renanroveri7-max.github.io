@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Biblical Modeler — Flow Bridge (Teste)",
-  "version": "0.4.0",
-  "description": "Prova local: envia prompt sob confirmação e detecta somente metadados visuais no projeto Google Flow, sem gerar nem copiar imagens.",
+  "version": "0.5.0",
+  "description": "Teste local: transfere uma prévia da imagem visível, apenas quando o navegador permite, com confirmação no site. Sem gerar imagens.",
   "permissions": [
     "tabs",
     "scripting"
