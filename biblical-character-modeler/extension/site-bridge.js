@@ -7,7 +7,7 @@
     const data=event.data;
     if(!data||data.sender!=="bcm-site"||data.target!=="flow-bridge")return;
     if(typeof data.nonce!=="string"||!/^bcm-[a-z0-9-]{8,80}$/i.test(data.nonce))return;
-    if(!["PING","FLOW_STATUS","FLOW_INSPECT","FLOW_MAP","OPEN_FLOW","PROMPT_PREFILL"].includes(data.type))return;
+    if(!["PING","FLOW_STATUS","FLOW_INSPECT","FLOW_MAP","FLOW_MEDIA_SCAN","OPEN_FLOW","PROMPT_PREFILL"].includes(data.type))return;
     if(data.type==="PROMPT_PREFILL"&&(typeof data.prompt!=="string"||data.prompt.length<40||data.prompt.length>35000))return;
     chrome.runtime.sendMessage({type:data.type,prompt:data.type==="PROMPT_PREFILL"?data.prompt:undefined},response=>{
       const problem=chrome.runtime.lastError?.message;
