@@ -13,3 +13,10 @@
 .flow-bridge-install a{color:#b1a7ff}
 .flow-bridge-install code{color:#d8d2ff}
 @media(max-width:700px){.flow-bridge-panel{padding:15px}.flow-bridge-buttons .btn{width:100%}}
+
+.flow-bridge-map{margin-top:16px;padding:16px;border:1px solid #4b547d;background:#0f1930;border-radius:10px}
+.flow-bridge-map h3{font-size:11px;color:#d7d0ff;letter-spacing:.8px;margin:0 0 11px}
+.flow-bridge-map p,.flow-bridge-map small{font-size:11px;color:#acbbd7;line-height:1.7}
+.flow-bridge-map b{color:#f4f7ff}
+.flow-map-field{display:flex;gap:15px;align-items:center;flex-wrap:wrap;border-top:1px solid #303e5f;padding:11px 0;font-size:11px;color:#adbedc}
+.flow-map-field strong{color:#fff;min-width:64px}
