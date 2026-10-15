@@ -1,0 +1,43 @@
+/* Pesquisa & Fichas v0.3.0 — estilos isolados */
+.ficha-actions{display:flex;gap:15px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.ficha-note{font-size:11px;color:#9cb0ce}
+.ficha-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.ficha-stats>div{background:#17243c;border:1px solid #2e3b5a;border-radius:12px;padding:17px 15px}
+.ficha-stats small{font-size:9px;letter-spacing:.65px;color:#8298bd;font-weight:900;display:block}
+.ficha-stats strong{font-size:26px;display:block;color:#f5f7ff;margin-top:9px}
+.ficha-layout{display:grid;grid-template-columns:minmax(210px,280px) minmax(0,1fr);align-items:start;gap:20px}
+.ficha-list{background:#131f36;border:1px solid #293a5c;border-radius:15px;overflow:hidden;position:sticky;top:16px}
+.ficha-list>input{display:block;width:calc(100% - 28px);margin:14px;border:1px solid #34476d;background:#091324;border-radius:9px;color:#e7edff;padding:12px;font-size:11px}
+.ficha-list-items{max-height:73vh;overflow:auto}
+.ficha-choice{width:100%;display:block;text-align:left;background:none;color:#e1eaf9;padding:15px 14px;border:0;border-top:1px solid #263654}
+.ficha-choice:hover,.ficha-choice.selected{background:#343080}
+.ficha-choice-name{display:block;font-size:12px;font-weight:800;overflow-wrap:anywhere}
+.ficha-choice small{display:block;color:#9caed2;font-size:10px;margin-top:7px}
+.ficha-editor{background:#121e35;border:1px solid #2b3c5f;border-radius:15px;overflow:hidden;min-width:0}
+.ficha-editor-header{display:flex;align-items:center;gap:15px;justify-content:space-between;padding:22px;border-bottom:1px solid #2c3b5a;background:#162340}
+.ficha-editor-header small{font-size:9px;color:#a8a0ff;letter-spacing:1px;font-weight:850}
+.ficha-editor-header h2{font-size:21px;margin:8px 0 5px;overflow-wrap:anywhere}
+.ficha-editor-header p{font-size:11px;color:#9daeca;margin:0}
+.ficha-section{border:0;border-bottom:1px solid #293a59;margin:0;padding:19px 23px 24px;min-width:0}
+fieldset.ficha-section{padding-top:18px}
+.ficha-section legend,.ficha-section h3{color:#a29bff;font-size:11px;font-weight:900;letter-spacing:.9px}
+.ficha-section h3{margin:0 0 17px}
+.ficha-ident{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.ficha-ident>div{padding:12px 13px;background:#0d192e;border-radius:8px;min-width:0}
+.ficha-ident small{display:block;font-size:10px;color:#849bbc;margin-bottom:7px}
+.ficha-ident strong{font-size:12px;color:#fff;font-weight:600;overflow-wrap:anywhere}
+.ficha-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:10px}
+.ficha-field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.ficha-field span{font-size:11px;color:#c4d2e8;font-weight:750}
+.ficha-field input,.ficha-field textarea{width:100%;font-family:inherit;color:#f3f4ff;border:1px solid #344768;background:#0a1427;border-radius:8px;padding:11px;font-size:12px;min-width:0}
+.ficha-field textarea{resize:vertical;min-height:77px}
+.ficha-field small{font-size:10px;color:#7e91ae}
+.ficha-field small.manual{color:#5feac4}
+.ficha-savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:21px 23px}
+.ficha-savebar span{color:#8da0bc;font-size:11px}
+.ficha-empty{border:1px dashed #3f4d69;border-radius:15px;min-height:290px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ebeffc;text-align:center;padding:27px}
+.ficha-empty p{color:#96a6c3;font-size:12px}
+.ficha-warning{border:1px solid #996a3b;border-radius:10px;background:#3f2e1d;color:#ffe1af;padding:14px;font-size:12px;margin-bottom:17px}
+@media(max-width:1150px){.ficha-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.ficha-layout{grid-template-columns:225px minmax(0,1fr)}}
+@media(max-width:870px){.ficha-layout{grid-template-columns:1fr}.ficha-list{position:static}.ficha-list-items{max-height:200px}.ficha-fields{grid-template-columns:1fr}}
+@media(max-width:620px){.ficha-stats{grid-template-columns:repeat(2,1fr)}.ficha-ident{grid-template-columns:1fr}.ficha-section{padding:15px}.ficha-editor-header{padding:15px}}
