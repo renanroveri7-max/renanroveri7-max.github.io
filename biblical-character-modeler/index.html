@@ -138,8 +138,15 @@ document.addEventListener("click",function(e){
  var el=e.target.closest("[data-page],[data-action],[data-cat-action],[data-cat-filter],[data-cat-record],[data-ficha-action],[data-ficha-id],[data-model-action],[data-prompt-action],[data-prompt-filter],[data-prompt-open],[data-prompt-copy],[data-prod-id],[data-prod-action],[data-connector-check]");if(!el)return;
  if(el.hasAttribute("data-connector-check")){
   attempt(async function(){
-   var result=await fetch("https://renanroveri7-max-github-io.vercel.app/api/bcm-status",{method:"GET",mode:"cors",credentials:"omit",cache:"no-store",headers:{"Accept":"application/json"}});
+   var result;
+   try{
+    result=await fetch("https://renanroveri7-max-github-io.vercel.app/api/bcm-status",{method:"GET",mode:"cors",credentials:"omit",cache:"no-store",headers:{"Accept":"application/json"}});
+   }catch(networkError){
+    throw Error("Falha ao consultar a Vercel. Possíveis causas: proteção de acesso, CORS ou bloqueio de rede. A produção continua bloqueada.");
+   }
    if(!result.ok)throw Error("O backend da Vercel retornou HTTP "+result.status+". Verifique a função e a proteção do projeto. Nenhuma geração foi iniciada.");
+   var kind=result.headers.get("content-type")||"";
+   if(!kind.includes("application/json"))throw Error("A Vercel não devolveu JSON da API. Pode estar redirecionando para autenticação.");
    var info=await result.json();
    if(!info||info.service!=="biblical-character-modeler"||info.api!=="diagnostic-v0.6.2")throw Error("A resposta do servidor não corresponde ao conector esperado.");
    connectorStatus=info;
