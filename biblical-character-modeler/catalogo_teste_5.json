@@ -1,0 +1,62 @@
+{
+  "personagens": [
+    {
+      "id": "JER-001",
+      "numero": 1,
+      "nome_exato_planilha": "Jeremias",
+      "livro": "Jeremias",
+      "tipo": "Individual",
+      "fase": "Jovem",
+      "capitulos": "Jeremias 1",
+      "contexto": "Registro de teste: fase jovem de Jeremias."
+    },
+    {
+      "id": "JER-002",
+      "numero": 2,
+      "nome_exato_planilha": "Jeremias",
+      "livro": "Jeremias",
+      "tipo": "Individual",
+      "fase": "Maduro",
+      "contexto": "Registro de teste: fase madura da mesma pessoa; identidade ainda não vinculada nesta versão."
+    },
+    {
+      "id": "JER-003",
+      "numero": 3,
+      "nome_exato_planilha": "Baruque, filho de Nerias",
+      "livro": "Jeremias",
+      "tipo": "Individual",
+      "fase": "Adulto"
+    },
+    {
+      "id": "JER-004",
+      "numero": 4,
+      "nome_exato_planilha": "Ebede-Meleque",
+      "livro": "Jeremias",
+      "tipo": "Individual",
+      "fase": "Adulto"
+    },
+    {
+      "id": "JER-005",
+      "numero": 5,
+      "nome_exato_planilha": "Anciãos de Judá — Jeremias 26",
+      "livro": "Jeremias",
+      "tipo": "Grupo",
+      "fase": "Adultos e idosos",
+      "quantidade_integrantes": 4,
+      "pessoas": [
+        {
+          "designacao": "Ancião 1"
+        },
+        {
+          "designacao": "Ancião 2"
+        },
+        {
+          "designacao": "Ancião 3"
+        },
+        {
+          "designacao": "Ancião 4"
+        }
+      ]
+    }
+  ]
+}
