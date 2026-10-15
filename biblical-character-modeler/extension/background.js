@@ -3,7 +3,7 @@
 // Não recolhe textos digitados, URLs privadas, nomes, imagens, credenciais ou chamadas de rede.
 const ALLOWED_ORIGINS=new Set(["https://renanroveri.com.br","https://www.renanroveri.com.br"]);
 const FLOW_PATTERN="https://flow.google.com/*";
-const COMMANDS=new Set(["PING","FLOW_STATUS","FLOW_INSPECT","FLOW_MAP","FLOW_MEDIA_SCAN","OPEN_FLOW","PROMPT_PREFILL"]);
+const COMMANDS=new Set(["PING","FLOW_STATUS","FLOW_INSPECT","FLOW_MAP","FLOW_MEDIA_SCAN","FLOW_CAPTURE_PREVIEW","OPEN_FLOW","PROMPT_PREFILL"]);
 
 function trusted(sender){
  try{
@@ -151,8 +151,46 @@ async function scanMedia(tabId){
  });
  return results?.[0]?.result||{ok:false,error:"O Chrome não retornou dados da guia."};
 }
+async function captureVisiblePreview(tabId){
+ const result=await chrome.scripting.executeScript({
+  target:{tabId},
+  func:()=>{
+   // Exporta apenas uma visualização PNG/JPEG quando o próprio navegador permite desenhá-la num canvas.
+   // Não consulta URLs, cookies, credenciais, rede, endpoints privados ou os botões do Flow.
+   if(!location.pathname.startsWith("/project/"))return {ok:false,error:"Abra uma imagem dentro de um projeto Google Flow."};
+   const visible=el=>{
+    const r=el.getBoundingClientRect(),st=getComputedStyle(el);
+    return r.width>=400&&r.height>=240&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth&&st.display!=="none"&&st.visibility!=="hidden";
+   };
+   const images=[...document.querySelectorAll("img")].filter(el=>visible(el)&&el.complete&&el.naturalWidth>=640&&el.naturalHeight>=400)
+     .sort((a,b)=>b.getBoundingClientRect().width*b.getBoundingClientRect().height-a.getBoundingClientRect().width*a.getBoundingClientRect().height);
+   if(!images.length)return {ok:false,error:"Nenhuma imagem ampliada e totalmente carregada foi identificada. Abra a imagem no editor do Flow."};
+   const first=images[0],r=first.getBoundingClientRect(),second=images[1];
+   if(second){
+    const r2=second.getBoundingClientRect();
+    if(r2.width*r2.height >r.width*r.height*.78)return {ok:false,error:"Duas imagens grandes e semelhantes estão visíveis. Abra apenas a imagem desejada."};
+   }
+   const targetMax=1920,ratio=Math.min(1,targetMax/Math.max(first.naturalWidth,first.naturalHeight));
+   const w=Math.max(1,Math.round(first.naturalWidth*ratio)),h=Math.max(1,Math.round(first.naturalHeight*ratio));
+   const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
+   const context=canvas.getContext("2d",{willReadFrequently:false});
+   if(!context)return {ok:false,error:"Seu navegador não abriu o canvas para o teste."};
+   try{context.drawImage(first,0,0,w,h);}
+   catch(e){return {ok:false,error:"O navegador impediu a leitura da imagem exibida pelo Flow."};}
+   let data;
+   try{data=canvas.toDataURL("image/jpeg",.88);}
+   catch(e){return {ok:false,error:"A origem HTTPS da imagem não permite exportação pelo canvas (bloqueio de segurança/CORS). Nenhum arquivo foi copiado."};}
+   if(typeof data!=="string"||!data.startsWith("data:image/jpeg;base64,"))return {ok:false,error:"O navegador não gerou uma prévia JPEG válida."};
+   if(data.length>4*1024*1024)return {ok:false,error:"Prévia excedeu o limite seguro de transferência de 3 MB."};
+   return {ok:true,data,encodedCharacters:data.length,width:w,height:h,
+    displayedWidth:Math.round(r.width),displayedHeight:Math.round(r.height),source:"rendered-canvas-preview",
+    originalFile:false,automatedGenerationAvailable:false};
+  }
+ });
+ return result?.[0]?.result||{ok:false,error:"A guia do Flow não respondeu à tentativa de captura."};
+}
 async function respond(type,request){
- if(type==="PING")return {ok:true,version:"0.4.0",capabilities:["detect_flow_tab","open_flow_tab","read_page_structure","map_composer_metadata","prefill_prompt_no_generation","scan_rendered_media_metadata"]};
+ if(type==="PING")return {ok:true,version:"0.5.0",capabilities:["detect_flow_tab","open_flow_tab","read_page_structure","map_composer_metadata","prefill_prompt_no_generation","scan_rendered_media_metadata","capture_visible_preview_if_browser_permits"]};
  const tabs=await flowTabs();
  if(type==="OPEN_FLOW"){
   if(tabs.length){await chrome.tabs.update(tabs[0].id,{active:true});return {ok:true,openedExisting:true,flowTabOpen:true};}
@@ -165,6 +203,11 @@ async function respond(type,request){
   const prompt=request?.prompt;
   if(typeof prompt!=="string"||prompt.length<40||prompt.length>35000)return {ok:false,error:"Prompt inválido ou acima do limite de 35 mil caracteres."};
   return prefillPrompt(tabs[0].id,prompt);
+ }
+ if(type==="FLOW_CAPTURE_PREVIEW"){
+  if(tabs.length!==1)return {ok:false,error:"Deixe apenas uma guia do Google Flow aberta."};
+  const captured=await captureVisiblePreview(tabs[0].id);
+  return captured.ok?{ok:true,flowTabOpen:true,captured}:captured;
  }
  if(type==="FLOW_MEDIA_SCAN"){
   if(tabs.length!==1)return {ok:false,error:"Abra apenas uma guia do Google Flow dentro de um projeto."};
