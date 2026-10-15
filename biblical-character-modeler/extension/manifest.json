@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Biblical Modeler — Flow Bridge (Teste)",
-  "version": "0.2.0",
-  "description": "Prova de conceito local: verifica a conexão com o Google Flow e identifica controles estruturais sem ler conteúdo nem gerar imagens.",
+  "version": "0.3.0",
+  "description": "Teste local: inspeciona controles e preenche prompt vazio no Flow mediante clique explícito, sem gerar imagens.",
   "permissions": [
     "tabs",
     "scripting"
