@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Bridge v0.4.0 — Baixar extensão</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#080e1c;color:#e6edff;font:15px/1.6 system-ui,sans-serif;display:grid;place-items:center;padding:25px}
+main{background:#15213a;border:1px solid #3d4b78;border-radius:18px;padding:32px;width:min(650px,100%)}h1{margin:0 0 10px;font-size:26px}p{color:#acbeda}button{border:0;padding:15px 23px;border-radius:10px;background:#614dff;color:#fff;font-weight:700;font-size:15px;cursor:pointer}button:disabled{opacity:.5;cursor:wait}#status{margin-top:15px;min-height:23px;font-size:13px}a{color:#bdb2ff}ol{padding-left:22px;color:#cfdaec}small{color:#98abcd}
+</style>
+</head>
+<body>
+<main>
+ <h1>Google Flow Bridge v0.4.0</h1>
+ <p>Instalador local para o Biblical Character Modeler. Este botão reúne os arquivos oficiais da extensão hospedados neste mesmo site em um ZIP, sem serviços externos.</p>
+ <button id="download" type="button">Baixar extensão v0.4.0 (.zip)</button>
+ <p id="status" role="status" aria-live="polite"></p>
+ <ol>
+  <li>Extraia o ZIP numa pasta permanente.</li>
+  <li>Abra <code>chrome://extensions</code> e desative/remova a extensão antiga.</li>
+  <li>Ative o Modo do desenvolvedor e clique em <b>Carregar sem compactação</b>.</li>
+  <li>Escolha a pasta extraída que contém <code>manifest.json</code>.</li>
+  <li>Atualize o <a href="./index.html">Biblical Character Modeler</a> com Ctrl+F5.</li>
+ </ol>
+ <small>Não executa o Flow, não usa credenciais, não instala extensões sem sua autorização e não consome créditos.</small>
+</main>
+<script>
+"use strict";
+const FILES=["manifest.json","background.js","site-bridge.js","README.md"];
+const DIR="bcm_flow_bridge_extension_v0.4.0/";
+const enc=new TextEncoder();
+const u16=(v)=>{const a=new Uint8Array(2);new DataView(a.buffer).setUint16(0,v,true);return a;};
+const u32=(v)=>{const a=new Uint8Array(4);new DataView(a.buffer).setUint32(0,v>>>0,true);return a;};
+function crc32(bytes){
+ let x=0xffffffff;
+ for(const b of bytes){x^=b;for(let n=0;n<8;n++)x=(x>>>1)^((x&1)?0xedb88320:0);}
+ return(x^0xffffffff)>>>0;
+}
+function zip(items){
+ const local=[],central=[];let offset=0;
+ for(const item of items){
+  const name=enc.encode(DIR+item.name),data=item.bytes,crc=crc32(data);
+  const localHeader=[
+   u32(0x04034b50),u16(20),u16(0x0800),u16(0),u16(0),u16(0),
+   u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data
+  ];
+  local.push(...localHeader);
+  central.push(
+   u32(0x02014b50),u16(20),u16(20),u16(0x0800),u16(0),u16(0),u16(0),
+   u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),
+   u32(0),u32(offset),name
+  );
+  offset+=30+name.length+data.length;
+ }
+ const centralSize=central.reduce((a,x)=>a+x.length,0);
+ const end=[u32(0x06054b50),u16(0),u16(0),u16(items.length),u16(items.length),u32(centralSize),u32(offset),u16(0)];
+ return new Blob([...local,...central,...end],{type:"application/zip"});
+}
+document.getElementById("download").addEventListener("click",async()=>{
+ const button=document.getElementById("download"),status=document.getElementById("status");
+ button.disabled=true;status.textContent="Preparando arquivos...";
+ try{
+  const items=[];
+  for(const name of FILES){
+   const res=await fetch("./extension/"+name,{credentials:"omit",cache:"no-store"});
+   if(!res.ok)throw Error("Falha ao baixar "+name+" (HTTP "+res.status+").");
+   const body=await res.arrayBuffer();
+   const bytes=new Uint8Array(body);
+   if(bytes.length<20||bytes.length>300000)throw Error("Arquivo inesperado: "+name);
+   items.push({name,bytes});
+  }
+  const manifest=JSON.parse(new TextDecoder().decode(items[0].bytes));
+  if(manifest.version!=="0.4.0")throw Error("Os arquivos ainda não estão sincronizados. Atualize esta página.");
+  if(!new TextDecoder().decode(items[1].bytes).includes("FLOW_MEDIA_SCAN"))throw Error("Código da extensão ainda não atualizado.");
+  const blob=zip(items),url=URL.createObjectURL(blob);
+  const link=document.createElement("a");link.href=url;link.download="bcm_flow_bridge_v0.4.0.zip";
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+  status.textContent="ZIP preparado e download solicitado. Agora extraia a pasta e carregue no Chrome.";
+ }catch(e){status.textContent="Erro: "+String(e.message||e);}
+ finally{button.disabled=false;}
+});
+</script>
+</body>
+</html>
