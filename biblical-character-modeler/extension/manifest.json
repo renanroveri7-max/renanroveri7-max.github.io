@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Biblical Modeler — Flow Bridge (Teste)",
+  "version": "0.1.0",
+  "description": "Prova de conceito local: comunica o Biblical Character Modeler e detecta uma guia aberta do Google Flow. Não gera imagens.",
+  "permissions": [
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://flow.google.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://renanroveri.com.br/biblical-character-modeler/*",
+        "https://www.renanroveri.com.br/biblical-character-modeler/*"
+      ],
+      "js": [
+        "site-bridge.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
