@@ -28,3 +28,15 @@
 .flow-capture-draft img{display:block;max-width:100%;max-height:620px;object-fit:contain;border-radius:10px;border:1px solid #48516c;margin:18px auto;background:#080b12}
 .flow-capture-actions{display:flex;flex-wrap:wrap;gap:12px}
 @media(max-width:720px){.flow-capture-actions .btn{width:100%}}
+
+.flow-folder{margin:16px 0;background:#14213b;border:1px solid #37476c;border-radius:14px;padding:20px}
+.flow-folder h2{font-size:15px;margin:0 0 10px;color:#fff}
+.flow-folder p{font-size:12px;line-height:1.7;color:#b8c7e3}
+.flow-folder strong{color:#eff3ff}
+.flow-folder>small{display:block;margin:13px 0;color:#9caecd;font-size:11px;line-height:1.65}
+.flow-folder-results{border-top:1px solid #33415e;margin-top:18px;padding-top:11px}
+.flow-folder-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid #2b3858}
+.flow-folder-item:first-of-type{border-top:0}
+.flow-folder-item b{display:block;color:#eff3ff;font-size:12px;overflow-wrap:anywhere}
+.flow-folder-item small{display:block;font-size:11px;color:#90a3c2;margin-top:4px}
+@media(max-width:650px){.flow-folder{padding:14px}.flow-folder-item{flex-direction:column;align-items:flex-start}.flow-folder-item .mini{width:100%}}
