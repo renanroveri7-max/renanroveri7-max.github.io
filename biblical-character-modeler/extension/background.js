@@ -3,7 +3,7 @@
 // Não recolhe textos digitados, URLs privadas, nomes, imagens, credenciais ou chamadas de rede.
 const ALLOWED_ORIGINS=new Set(["https://renanroveri.com.br","https://www.renanroveri.com.br"]);
 const FLOW_PATTERN="https://flow.google.com/*";
-const COMMANDS=new Set(["PING","FLOW_STATUS","FLOW_INSPECT","FLOW_MAP","OPEN_FLOW"]);
+const COMMANDS=new Set(["PING","FLOW_STATUS","FLOW_INSPECT","FLOW_MAP","OPEN_FLOW","PROMPT_PREFILL"]);
 
 function trusted(sender){
  try{
@@ -71,14 +71,56 @@ async function scan(tabId,kind){
  });
  return results?.[0]?.result||null;
 }
-async function respond(type){
- if(type==="PING")return {ok:true,version:"0.2.0",capabilities:["detect_flow_tab","open_flow_tab","read_page_structure","map_composer_metadata"]};
+async function prefillPrompt(tabId,prompt){
+ const results=await chrome.scripting.executeScript({
+  target:{tabId},args:[prompt],
+  func:async function(text){
+   // Somente após clique explícito no site. Não toca no botão Gerar ou na conta.
+   if(!location.pathname.startsWith("/project/"))return {ok:false,error:"Abra um projeto do Google Flow antes de preencher."};
+   const visible=(el)=>{
+    const b=el.getBoundingClientRect(),c=getComputedStyle(el);
+    return b.width>20&&b.height>12&&b.bottom>0&&b.top<innerHeight&&c.display!=="none"&&c.visibility!=="hidden";
+   };
+   const editors=[...document.querySelectorAll('[contenteditable="true"]')].filter(el=>{
+    if(!visible(el)||el.getAttribute("aria-disabled")==="true"||el.closest('[aria-disabled="true"]'))return false;
+    const b=el.getBoundingClientRect(), x=(b.left+b.width/2)/innerWidth, y=(b.top+b.height/2)/innerHeight;
+    const meta=[el.getAttribute("aria-label"),el.getAttribute("data-placeholder"),el.getAttribute("placeholder")].filter(Boolean).join(" ");
+    return (y>.62&&x>.25&&x<.78)||/o que você quer criar|what.*creat|prompt/i.test(meta);
+   });
+   if(editors.length!==1)return {ok:false,error:"Não identifiquei um único campo seguro de prompt (encontrados: "+editors.length+"). Não modifiquei nada."};
+   const editor=editors[0];
+   if((editor.textContent||"").trim().length>0)return {ok:false,error:"O prompt do Flow já contém texto. Para evitar sobrescrever, esvazie manualmente esse campo antes do teste."};
+   editor.focus();
+   const selection=window.getSelection();
+   const range=document.createRange();
+   range.selectNodeContents(editor);range.collapse(false);
+   selection.removeAllRanges();selection.addRange(range);
+   const accepted=document.execCommand("insertText",false,text);
+   // Não acionamos atalhos nem cliques de envio. Conferimos apenas o comprimento.
+   await new Promise(resolve=>setTimeout(resolve,350));
+   const actual=(editor.textContent||"").replace(/\r\n/g,"\n");
+   const equal=actual===text;
+   if(!accepted||!equal)return {ok:false,error:"O editor não confirmou o preenchimento. Verifique visualmente o Flow; não houve tentativa de geração."};
+   return {ok:true,prefilled:true,characters:text.length,flowTabOpen:true,automatedGenerationAvailable:false};
+  }
+ });
+ return results?.[0]?.result||{ok:false,error:"O Flow não retornou confirmação do editor."};
+}
+async function respond(type,request){
+ if(type==="PING")return {ok:true,version:"0.3.0",capabilities:["detect_flow_tab","open_flow_tab","read_page_structure","map_composer_metadata","prefill_prompt_no_generation"]};
  const tabs=await flowTabs();
  if(type==="OPEN_FLOW"){
   if(tabs.length){await chrome.tabs.update(tabs[0].id,{active:true});return {ok:true,openedExisting:true,flowTabOpen:true};}
   await chrome.tabs.create({url:"https://flow.google.com/"});return {ok:true,openedExisting:false,flowTabOpen:true};
  }
  if(type==="FLOW_STATUS")return {ok:true,flowTabOpen:tabs.length>0,flowTabCount:tabs.length};
+ if(type==="PROMPT_PREFILL"){
+  if(!tabs.length)return {ok:false,error:"Abra o Google Flow antes do preenchimento."};
+  if(tabs.length!==1)return {ok:false,error:"Deixe somente uma guia do Google Flow aberta."};
+  const prompt=request?.prompt;
+  if(typeof prompt!=="string"||prompt.length<40||prompt.length>35000)return {ok:false,error:"Prompt inválido ou acima do limite de 35 mil caracteres."};
+  return prefillPrompt(tabs[0].id,prompt);
+ }
  if(type==="FLOW_INSPECT"||type==="FLOW_MAP"){
   if(!tabs.length)return {ok:false,error:"Nenhuma guia do Google Flow aberta. Abra o Flow e entre no projeto."};
   if(tabs.length>1)return {ok:false,error:"Mais de uma guia do Google Flow aberta. Feche as extras antes de inspecionar."};
@@ -91,6 +133,6 @@ async function respond(type){
 chrome.runtime.onMessage.addListener((request,sender,sendResponse)=>{
  if(!trusted(sender)){sendResponse({ok:false,error:"Origem não autorizada."});return false;}
  if(!request||!COMMANDS.has(request.type)){sendResponse({ok:false,error:"Ação não permitida."});return false;}
- respond(request.type).then(sendResponse).catch(err=>sendResponse({ok:false,error:"Falha de inspeção: "+String(err.message||err)}));
+ respond(request.type,request).then(sendResponse).catch(err=>sendResponse({ok:false,error:"Falha de inspeção: "+String(err.message||err)}));
  return true;
 });
