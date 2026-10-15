@@ -58,7 +58,7 @@ async function prepareImport(file,record,project,catalog,fichas,prompts,models){
 function shortSize(b){return (b/1048576).toFixed(1)+" MB";}
 function pageHtml(project,catalog,fichas,prompts,models,imports,selectedId,previewId,previewURL){
  if(!project)return '<div class="panel"><h2>Selecione um projeto</h2><p>Os resultados do Flow ficam separados por projeto.</p><button class="btn" data-page="projects">Abrir Projetos</button></div>';
- if(!catalog||!Array.isArray(catalog.records))return '<div class="panel"><h2>Importe um catálogo</h2><p>O personagem precisa existir antes de receber uma imagem.</p><button class="btn" data-page="catalog">Ir ao Catálogo</button></div>';
+ if(!catalog||!Array.isArray(catalog.records)||catalog.records.length===0)return '<div class="panel"><h2>Importe um catálogo</h2><p>O personagem precisa existir antes de receber uma imagem.</p><button class="btn" data-page="catalog">Ir ao Catálogo</button></div>';
  const list=catalog.records,record=list.find(r=>r.id_tecnico===selectedId)||list[0],isReady=validSelection(record,catalog,fichas,prompts,models);
  const mine=(imports||[]).filter(i=>i.recordId===record.id_tecnico).sort((a,b)=>b.createdAt-a.createdAt);
  const badge=isReady.ok?'<span class="flow-status ok">PRONTO PARA FLOW</span>':'<span class="flow-status blocked">PREPARAÇÃO PENDENTE</span>';
