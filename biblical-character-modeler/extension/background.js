@@ -98,8 +98,9 @@ async function prefillPrompt(tabId,prompt){
    const accepted=document.execCommand("insertText",false,text);
    // Não acionamos atalhos nem cliques de envio. Conferimos apenas o comprimento.
    await new Promise(resolve=>setTimeout(resolve,350));
-   const actual=(editor.textContent||"").replace(/\r\n/g,"\n");
-   const equal=actual===text;
+   const normalize=value=>String(value||"").replace(/\s+/g," ").trim();
+   const displayed=editor.innerText||editor.textContent||"";
+   const equal=normalize(displayed)===normalize(text);
    if(!accepted||!equal)return {ok:false,error:"O editor não confirmou o preenchimento. Verifique visualmente o Flow; não houve tentativa de geração."};
    return {ok:true,prefilled:true,characters:text.length,flowTabOpen:true,automatedGenerationAvailable:false};
   }
