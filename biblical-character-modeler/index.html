@@ -9,7 +9,7 @@
 (function(){
 "use strict";
 var NAV=[["Visão Geral","overview","▦","ESTÚDIO"],["Projetos","projects","▱","ESTÚDIO"],["Catálogo","catalog","▤","GESTÃO & CATÁLOGO"],["Fases","phases","♧","GESTÃO & CATÁLOGO"],["Pesquisa & Fichas","research","◈","GESTÃO & CATÁLOGO"],["Modelos Fixos","models","♙","ESTÚDIO VISUAL"],["Prompts","prompts","⌘","ESTÚDIO VISUAL"],["Produção","production","▣","PIPELINE"],["Auditoria","audit","✧","PIPELINE"],["Exportação","export","⇧","PIPELINE"],["Configurações","settings","⚙","SISTEMA"]];
-var db=null,projects=[],activeId=null,page="overview",modal=null,error="",message="",busy=false,catalog=null,catalogPreview=null,catFilter="all",catSearch="",catSelectedId=null,catFile=null,fichasBundle=null,fichaSelectedId=null,fichaSearch="",modelsSaved={individual:null,group:null},modelDraft={individual:null,group:null},promptBundle=null,promptSelectedId=null,promptFilter="all",promptSearch="",productionBundle=null,productionId=null;
+var db=null,projects=[],activeId=null,page="overview",modal=null,error="",message="",busy=false,catalog=null,catalogPreview=null,catFilter="all",catSearch="",catSelectedId=null,catFile=null,fichasBundle=null,fichaSelectedId=null,fichaSearch="",modelsSaved={individual:null,group:null},modelDraft={individual:null,group:null},promptBundle=null,promptSelectedId=null,promptFilter="all",promptSearch="",productionBundle=null,productionId=null,connectorStatus=null;
 function safe(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function root(){return document.getElementById("root");}
 function active(){return projects.find(function(p){return p.id===activeId;})||null;}
@@ -109,7 +109,11 @@ async function restoreProduction(){
  productionBundle=activeId?await req("productionPackets","readonly",function(s){return s.get(activeId);}):null;
 }
 function productionHtml(){
- return heading("PREPARAÇÃO DE PRODUÇÃO","Estação de Geração — Pré-voo","Verificação de ficha, prompt e referência visual antes da integração com o gerador.","<span class='badge'>PRODUÇÃO WEB 0.6.0 — PREPARAÇÃO</span>")+
+ var msg=connectorStatus
+ ? '<p><b>Resposta do servidor:</b> '+(connectorStatus.online?'ONLINE':'INATIVO')+' · Gemini API '+(connectorStatus.providerKeyConfigured?'configurada':'sem chave')+' · Controle de acesso '+(connectorStatus.studioAccessConfigured?'configurado':'não configurado')+' · Geração '+(connectorStatus.generationEnabled?'habilitada':'desabilitada')+'.</p>'
+ : '<p>Teste a disponibilidade do backend antes de configurar a geração real.</p>';
+ return heading("PREPARAÇÃO DE PRODUÇÃO","Estação de Geração — Pré-voo","Verificação de ficha, prompt e referência visual antes da integração com o gerador.","<span class='badge'>PRODUÇÃO WEB 0.6.1 — CONEXÃO</span>")+
+ '<section class="prod-note"><b>Conector Google Gemini API — diagnóstico sem custos</b><div style="margin:12px 0"><button class="mini" data-connector-check="1">VERIFICAR CONEXÃO DO SERVIDOR</button></div>'+msg+'<small>A geração real continua bloqueada. Nenhuma chave será exibida no navegador.</small></section>'+
  window.BCMProduction.html(active(),catalog,fichasBundle,promptBundle,modelsSaved,productionBundle,productionId);
 }
 function coming(){
@@ -125,13 +129,24 @@ function modalHtml(){
 function render(){
  var a=active(), current=NAV.find(function(p){return p[1]===page;});
  root().className="";
- root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.6.0</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():page==="research"?fichasHtml():page==="models"?modelsHtml():page==="prompts"?promptsHtml():page==="production"?productionHtml():coming())+'</div><footer class="footer">Fundação + Catálogo + Fichas + Modelos + Prompts + Preparação · IA ainda não conectada</footer></main></div>'+modalHtml();
+ root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.6.1</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():page==="research"?fichasHtml():page==="models"?modelsHtml():page==="prompts"?promptsHtml():page==="production"?productionHtml():coming())+'</div><footer class="footer">Fundação + Catálogo + Fichas + Modelos + Prompts + Preparação · IA ainda não conectada</footer></main></div>'+modalHtml();
  if(modal)document.querySelector('[name="name"]').focus();
 }
 function attempt(fn){if(busy)return;busy=true;error="";message="";Promise.resolve().then(fn).catch(function(e){error=e&&e.message||"Erro inesperado";}).finally(function(){busy=false;render();});}
 document.addEventListener("click",function(e){
  if(e.target.id==="overlay"){modal=null;render();return;}
- var el=e.target.closest("[data-page],[data-action],[data-cat-action],[data-cat-filter],[data-cat-record],[data-ficha-action],[data-ficha-id],[data-model-action],[data-prompt-action],[data-prompt-filter],[data-prompt-open],[data-prompt-copy],[data-prod-id],[data-prod-action]");if(!el)return;
+ var el=e.target.closest("[data-page],[data-action],[data-cat-action],[data-cat-filter],[data-cat-record],[data-ficha-action],[data-ficha-id],[data-model-action],[data-prompt-action],[data-prompt-filter],[data-prompt-open],[data-prompt-copy],[data-prod-id],[data-prod-action],[data-connector-check]");if(!el)return;
+ if(el.hasAttribute("data-connector-check")){
+  attempt(async function(){
+   var result=await fetch("/api/bcm-status",{method:"GET",cache:"no-store",headers:{"Accept":"application/json"}});
+   if(!result.ok)throw Error("O servidor de geração ainda não responde neste domínio (HTTP "+result.status+"). O aplicativo permanece seguro e a produção continua bloqueada.");
+   var info=await result.json();
+   if(!info||info.service!=="biblical-character-modeler"||info.api!=="diagnostic-v0.6.1")throw Error("A resposta do servidor não corresponde ao conector esperado.");
+   connectorStatus=info;
+   message="Diagnóstico respondido pelo servidor. Geração de imagens permanece desabilitada até configuração segura.";
+  });return;
+ }
+
  if(el.hasAttribute("data-prod-action")){
   var action=el.dataset.prodAction,recordId=el.dataset.prodId,record=catalog&&catalog.records.find(function(r){return r.id_tecnico===recordId;});
   if(!record||!activeId)return;
