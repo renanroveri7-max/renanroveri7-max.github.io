@@ -3,7 +3,7 @@
 // Não recolhe textos digitados, URLs privadas, nomes, imagens, credenciais ou chamadas de rede.
 const ALLOWED_ORIGINS=new Set(["https://renanroveri.com.br","https://www.renanroveri.com.br"]);
 const FLOW_PATTERN="https://flow.google.com/*";
-const COMMANDS=new Set(["PING","FLOW_STATUS","FLOW_INSPECT","FLOW_MAP","OPEN_FLOW","PROMPT_PREFILL"]);
+const COMMANDS=new Set(["PING","FLOW_STATUS","FLOW_INSPECT","FLOW_MAP","FLOW_MEDIA_SCAN","OPEN_FLOW","PROMPT_PREFILL"]);
 
 function trusted(sender){
  try{
@@ -107,8 +107,52 @@ async function prefillPrompt(tabId,prompt){
  });
  return results?.[0]?.result||{ok:false,error:"O Flow não retornou confirmação do editor."};
 }
+async function scanMedia(tabId){
+ const results=await chrome.scripting.executeScript({
+  target:{tabId},
+  func:()=>{
+   if(!location.pathname.startsWith("/project/"))return {ok:false,error:"Abra um projeto do Flow para detectar resultados."};
+   const candidates=[];
+   const visible=(el)=>{
+    const r=el.getBoundingClientRect(),s=getComputedStyle(el);
+    if(r.width<120||r.height<100||r.bottom<0||r.top>innerHeight||r.right<0||r.left>innerWidth)return false;
+    return s.visibility!=="hidden"&&s.display!=="none"&&Number(s.opacity||1)>0;
+   };
+   const bucket=el=>{
+    const r=el.getBoundingClientRect();
+    const x=(r.left+r.width/2)/Math.max(1,innerWidth);
+    const y=(r.top+r.height/2)/Math.max(1,innerHeight);
+    return (y<.34?"topo":y<.67?"meio":"baixo")+"/"+(x<.33?"esquerda":x<.67?"centro":"direita");
+   };
+   for(const el of document.querySelectorAll("img,video,canvas")){
+    if(!visible(el))continue;
+    const r=el.getBoundingClientRect(),t=el.tagName.toLowerCase();
+    const width=t==="img"?el.naturalWidth:t==="video"?el.videoWidth:el.width;
+    const height=t==="img"?el.naturalHeight:t==="video"?el.videoHeight:el.height;
+    const ref=t==="img"?el.currentSrc||el.src:t==="video"?el.currentSrc||el.poster:"";
+    const source=typeof ref!=="string"?"nenhum":ref.startsWith("blob:")?"blob":ref.startsWith("data:")?"data":ref.startsWith("https:")?"https":ref.startsWith("http:")?"http":"outro";
+    candidates.push({kind:t,location:bucket(el),displayWidth:Math.round(r.width),displayHeight:Math.round(r.height),
+      intrinsicWidth:Number(width)||0,intrinsicHeight:Number(height)||0,sourceKind:source});
+    if(candidates.length>=20)break;
+   }
+   let largeBackgrounds=0;
+   const controls=[...document.querySelectorAll("div,section,article")];
+   for(const el of controls.slice(0,1600)){
+    if(!visible(el))continue;
+    const bg=getComputedStyle(el).backgroundImage;
+    if(bg&&bg!=="none"&&/^url\(/.test(bg))largeBackgrounds++;
+    if(largeBackgrounds>=30)break;
+   }
+   return {ok:true,projectView:true,scanType:"metadata-only",
+      counts:{largeMedia:candidates.length,largeBackgrounds,images:candidates.filter(x=>x.kind==="img").length,
+        videos:candidates.filter(x=>x.kind==="video").length,canvases:candidates.filter(x=>x.kind==="canvas").length},
+      candidates,automaticFileRetrievalConfirmed:false,automaticGenerationAvailable:false};
+  }
+ });
+ return results?.[0]?.result||{ok:false,error:"O Chrome não retornou dados da guia."};
+}
 async function respond(type,request){
- if(type==="PING")return {ok:true,version:"0.3.0",capabilities:["detect_flow_tab","open_flow_tab","read_page_structure","map_composer_metadata","prefill_prompt_no_generation"]};
+ if(type==="PING")return {ok:true,version:"0.4.0",capabilities:["detect_flow_tab","open_flow_tab","read_page_structure","map_composer_metadata","prefill_prompt_no_generation","scan_rendered_media_metadata"]};
  const tabs=await flowTabs();
  if(type==="OPEN_FLOW"){
   if(tabs.length){await chrome.tabs.update(tabs[0].id,{active:true});return {ok:true,openedExisting:true,flowTabOpen:true};}
@@ -121,6 +165,12 @@ async function respond(type,request){
   const prompt=request?.prompt;
   if(typeof prompt!=="string"||prompt.length<40||prompt.length>35000)return {ok:false,error:"Prompt inválido ou acima do limite de 35 mil caracteres."};
   return prefillPrompt(tabs[0].id,prompt);
+ }
+ if(type==="FLOW_MEDIA_SCAN"){
+  if(tabs.length!==1)return {ok:false,error:"Abra apenas uma guia do Google Flow dentro de um projeto."};
+  const media=await scanMedia(tabs[0].id);
+  if(!media.ok)return media;
+  return {ok:true,flowTabOpen:true,media};
  }
  if(type==="FLOW_INSPECT"||type==="FLOW_MAP"){
   if(!tabs.length)return {ok:false,error:"Nenhuma guia do Google Flow aberta. Abra o Flow e entre no projeto."};
