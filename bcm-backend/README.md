@@ -1,0 +1,1 @@
+BCM dedicated backend deployment directory. Root directory for independent Vercel project biblical-character-modeler-api. This project does not share the Transforma 360 runtime. The status endpoint is safe for GET; generation is not implemented.
