@@ -54,7 +54,16 @@ function catalogHtml(){
  window.BCMCatalog.pageHtml(active(),catalog,catalogPreview,catFilter,catSearch,catSelectedId);
 }
 function clearCatalogUi(){catalogPreview=null;catFilter="all";catSearch="";catSelectedId=null;catFile=null;}
-async function restoreCatalog(){clearCatalogUi();catalog=activeId?await req("catalogs","readonly",function(s){return s.get(activeId);}):null;}
+async function restoreCatalog(){
+ clearCatalogUi();
+ if(!activeId){catalog=null;return;}
+ catalog=await req("catalogs","readonly",function(s){return s.get(activeId);});
+ var savedDraft=await req("settings","readonly",function(s){return s.get("catalogDraft:"+activeId);});
+ if(savedDraft && savedDraft.value && savedDraft.value.projectId===activeId && Array.isArray(savedDraft.value.records)){
+  catalogPreview=savedDraft.value;
+  message="Rascunho de importação recuperado. Clique em Confirmar importação para salvar definitivamente.";
+ }
+}
 function coming(){
  var item=NAV.find(function(p){return p[1]===page;})||NAV[0];
  return heading("MÓDULO PLANEJADO",safe(item[0]),"Reservado para implementação na próxima etapa.","<span class='badge wait'>EM DESENVOLVIMENTO</span>")+
@@ -68,7 +77,7 @@ function modalHtml(){
 function render(){
  var a=active(), current=NAV.find(function(p){return p[1]===page;});
  root().className="";
- root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.2.0</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():coming())+'</div><footer class="footer">Fundação + Catálogo · Nenhuma chamada de IA</footer></main></div>'+modalHtml();
+ root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.2.1</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():coming())+'</div><footer class="footer">Fundação + Catálogo · Nenhuma chamada de IA</footer></main></div>'+modalHtml();
  if(modal)document.querySelector('[name="name"]').focus();
 }
 function attempt(fn){if(busy)return;busy=true;error="";message="";Promise.resolve().then(fn).catch(function(e){error=e&&e.message||"Erro inesperado";}).finally(function(){busy=false;render();});}
@@ -80,16 +89,23 @@ document.addEventListener("click",function(e){
  if(el.hasAttribute("data-cat-action")){
   var ca=el.dataset.catAction;
   if(ca==="choose"){document.getElementById("catalog-file").click();return;}
-  if(ca==="cancel"){catalogPreview=null;catFile=null;catSelectedId=null;render();return;}
+  if(ca==="cancel"){attempt(async function(){
+   if(activeId)await req("settings","readwrite",function(s){return s.delete("catalogDraft:"+activeId);});
+   catalogPreview=null;catFile=null;catSelectedId=null;message="Prévia cancelada. Catálogo existente preservado.";
+  });return;}
   if(ca==="close-detail"){catSelectedId=null;render();return;}
   if(ca==="confirm"){
    if(!catalogPreview || catalogPreview.stats.errorCount>0 || !activeId)return;
    if(catalog && !confirm("Substituir o catálogo atual deste projeto? Os dados anteriores deixarão de aparecer."))return;
    attempt(async function(){
     var copy=Object.assign({},catalogPreview);delete copy.sheets;
+    if(copy.projectId!==activeId)throw new Error("O projeto ativo mudou. Selecione o projeto correto e tente novamente.");
     await req("catalogs","readwrite",function(s){return s.put(copy);});
-    catalog=copy;catalogPreview=null;catFile=null;catSelectedId=null;
-    message="Catálogo importado e salvo neste navegador.";
+    var saved=await req("catalogs","readonly",function(s){return s.get(activeId);});
+    if(!saved || !saved.records || saved.records.length!==copy.records.length)throw new Error("Falha na verificação do catálogo gravado. A prévia foi preservada.");
+    await req("settings","readwrite",function(s){return s.delete("catalogDraft:"+activeId);});
+    catalog=saved;catalogPreview=null;catFile=null;catSelectedId=null;
+    message="Catálogo SALVO e confirmado no IndexedDB: "+saved.records.length+" registros. Pode atualizar com F5.";
    });return;
   }
  }
@@ -123,14 +139,21 @@ document.addEventListener("change",function(e){
  if(e.target.id==="catalog-file"){
   var file=e.target.files&&e.target.files[0];if(!file||!activeId)return;
   catFile=file;attempt(async function(){
-   catalogPreview=await window.BCMCatalog.parseFile(file,activeId);
-   catSearch="";catFilter="all";catSelectedId=null;
-   message=catalogPreview.stats.errorCount?"Importação com erros: corrija antes de confirmar.":"Prévia preparada. Revise os registros antes de confirmar.";
+   var projectId=activeId,preview=await window.BCMCatalog.parseFile(file,projectId);
+   await req("settings","readwrite",function(s){return s.put({key:"catalogDraft:"+projectId,value:preview});});
+   if(activeId!==projectId)throw new Error("Projeto alterado durante a importação. Volte ao projeto original.");
+   catalogPreview=preview;catSearch="";catFilter="all";catSelectedId=null;
+   message=preview.stats.errorCount?"Importação contém erros: corrija antes de confirmar.":"Prévia salva como rascunho. Clique em Confirmar importação para concluir.";
   });
  }
  if(e.target.id==="catalog-sheet" && catFile && activeId){
   var sheet=e.target.value;
-  attempt(async function(){catalogPreview=await window.BCMCatalog.parseFile(catFile,activeId,sheet);catSelectedId=null;message="Aba do Excel selecionada: "+sheet;});
+  attempt(async function(){
+    var projectId=activeId,preview=await window.BCMCatalog.parseFile(catFile,projectId,sheet);
+    await req("settings","readwrite",function(s){return s.put({key:"catalogDraft:"+projectId,value:preview});});
+    if(activeId!==projectId)throw new Error("Projeto mudou durante a importação.");
+    catalogPreview=preview;catSelectedId=null;message="Aba do Excel selecionada: "+sheet+". Clique em Confirmar importação.";
+   });
  }
 });
 document.addEventListener("keydown",function(e){
