@@ -122,7 +122,7 @@ async function restoreFlow(){
  flowSelectedId=catalog&&catalog.records[0]?catalog.records[0].id_tecnico:null;
 }
 function flowHtml(){
- return heading("INTEGRAÇÃO EXPERIMENTAL","Google Flow — Ponte com o Chrome","Testando comunicação com a sessão Flow aberta no seu próprio navegador.","<span class='badge'>FLOW BRIDGE 0.7.3 — ENVIO DE PROMPT</span>")+
+ return heading("INTEGRAÇÃO EXPERIMENTAL","Google Flow — Ponte com o Chrome","Testando comunicação com a sessão Flow aberta no seu próprio navegador.","<span class='badge'>FLOW BRIDGE 0.7.4 — RESULTADOS</span>")+
  '<div id="bcm-bridge-placeholder"></div>'+
  window.BCMFlow.pageHtml(active(),catalog,fichasBundle,promptBundle,modelsSaved,flowImports,flowSelectedId,flowPreviewId,flowPreviewURL);
 }
@@ -159,7 +159,7 @@ function modalHtml(){
 function render(){
  var a=active(), current=NAV.find(function(p){return p[1]===page;});
  root().className="";
- root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.7.3</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():page==="research"?fichasHtml():page==="models"?modelsHtml():page==="prompts"?promptsHtml():page==="production"?productionHtml():page==="flow"?flowHtml():coming())+'</div><footer class="footer">Fundação + Catálogo + Fichas + Modelos + Prompts + Preparação · IA ainda não conectada</footer></main></div>'+modalHtml();
+ root().innerHTML='<div class="shell"><aside class="aside"><div class="brand"><div class="logo">✧</div><div><strong>BIBLICAL CHARACTER</strong><small>PRODUCTION STUDIO</small></div></div><nav class="nav">'+navHtml()+'</nav><div class="user">'+(a?'<b>'+safe(a.name)+'</b><br>'+safe(a.book):'Sem projeto ativo')+'</div></aside><main class="main"><header class="top"><div><span class="online">ESTÚDIO ONLINE</span><span class="crumb">　/　'+safe(current[0])+'</span></div><span class="version">PRODUCTION STUDIO WEB · 0.7.4</span></header><div class="content">'+(error?'<div role="alert" class="alert">⚠ '+safe(error)+'</div>':'')+(message?'<div class="msg">'+safe(message)+'</div>':'')+(page==="overview"?overview():page==="projects"?projectsHtml():page==="catalog"?catalogHtml():page==="research"?fichasHtml():page==="models"?modelsHtml():page==="prompts"?promptsHtml():page==="production"?productionHtml():page==="flow"?flowHtml():coming())+'</div><footer class="footer">Fundação + Catálogo + Fichas + Modelos + Prompts + Preparação · IA ainda não conectada</footer></main></div>'+modalHtml();
  if(page==="flow"&&window.BCMBridge)window.BCMBridge.draw();
  if(modal)document.querySelector('[name="name"]').focus();
 }
