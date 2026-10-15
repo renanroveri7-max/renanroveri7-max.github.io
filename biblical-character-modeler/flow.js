@@ -65,6 +65,7 @@ function pageHtml(project,catalog,fichas,prompts,models,imports,selectedId,previ
  const refs=isReady.ok?'<div class="flow-ref"><span>Referência oficial: <b>'+esc(isReady.model.filename)+'</b></span><button class="mini" type="button" data-flow-action="download-ref">BAIXAR REFERÊNCIA OFICIAL</button></div>':'<div class="flow-caution">'+esc(isReady.reason)+'</div>';
  const controls='<div class="flow-controls">'+
  '<button class="btn" type="button" data-flow-action="copy" '+(!isReady.ok?'disabled':'')+'>1. COPIAR PROMPT</button>'+
+ '<button class="btn" type="button" data-flow-action="prefill" '+(!isReady.ok?'disabled':'')+'>TESTAR ENVIO DIRETO DO PROMPT (NÃO GERA)</button>'+
  '<a class="btn btn-gray flow-flowlink" href="'+FLOW_URL+'" target="_blank" rel="noopener noreferrer">2. ABRIR GOOGLE FLOW ↗</a>'+
  '<button class="btn" type="button" data-flow-action="choose" '+(!isReady.ok?'disabled':'')+'>3. IMPORTAR IMAGEM GERADA</button>'+
  '<input id="flow-result-file" type="file" accept="image/png,image/jpeg,image/webp" style="display:none" aria-label="Importar imagem gerada pelo Google Flow">'+
