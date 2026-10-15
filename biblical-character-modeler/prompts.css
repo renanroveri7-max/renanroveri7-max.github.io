@@ -1,0 +1,40 @@
+/* Motor de prompts v0.5.0 — isolado dos demais módulos */
+.prompt-toolbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:17px}
+.prompt-toolbar span{font-size:11px;color:#99afcd}
+.prompt-counters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:21px}
+.prompt-counters>div{background:#17243d;border:1px solid #2d3d5b;border-radius:12px;min-width:0;padding:16px 12px}
+.prompt-counters small{font-size:9px;letter-spacing:.65px;color:#8199bd;font-weight:850;display:block;line-height:1.5}
+.prompt-counters strong{font-size:24px;color:#eef4ff;display:block;margin-top:9px}
+.prompt-list{border:1px solid #273c5e;border-radius:14px;overflow:hidden;background:#111b31}
+.prompt-filter{padding:14px;background:#192743;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.prompt-filter input{background:#0d182b;border:1px solid #374a6b;border-radius:10px;min-width:170px;width:min(550px,100%);padding:12px 15px;color:#e4edfc;font-size:12px}
+.prompt-filter>div{display:flex;gap:6px}
+.prompt-filter .mini.selected{background:#6152f5;border-color:#6152f5;color:#fff}
+.prompt-table-wrap{overflow-x:auto}
+.prompt-table{border-collapse:collapse;width:100%;text-align:left;font-size:12px}
+.prompt-table th{background:#0b162b;color:#809abc;letter-spacing:.5px;font-weight:900;font-size:9px;padding:14px;white-space:nowrap}
+.prompt-table td{border-top:1px solid #2a3853;padding:15px 13px;color:#acbfd8}
+.prompt-table td strong{font-size:12px;color:#f7f9ff;display:block}
+.prompt-table td small{display:block;font-size:10px;color:#8196b5;margin-top:6px}
+.prompt-table .mini{font-size:10px;white-space:nowrap}
+.prompt-state{white-space:nowrap;font-size:9px;font-weight:850;padding:7px 9px;border-radius:8px}
+.prompt-state.prepared{color:#54e2b4;background:#134737}
+.prompt-state.warning{color:#ffd28b;background:#4b381d}
+.prompt-state.error{color:#ffb0b9;background:#542838}
+.prompt-state.pending{color:#99adcd;background:#27344b}
+.prompt-state.stale{color:#ffd28b;background:#493c30}
+.prompt-inspector{background:#131f37;border:1px solid #344669;border-radius:15px;overflow:hidden;margin-top:22px}
+.prompt-inspector-head{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#1a2846;padding:21px}
+.prompt-inspector-head small{font-size:10px;color:#9993fa;letter-spacing:1px;font-weight:900}
+.prompt-inspector-head h2{font-size:20px;color:#fff;margin:8px 0}
+.prompt-inspector-head p{font-size:11px;color:#a5b8d2;margin:0}
+.prompt-inspector h3{font-size:11px;letter-spacing:.85px;color:#aaa0ff;margin:22px 24px 10px}
+.prompt-pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:510px;overflow:auto;background:#0b1428;color:#ccd9f7;font:11px/1.75 ui-monospace,Consolas,monospace;padding:19px;margin:0 23px 14px;border:1px solid #2b3f62;border-radius:11px}
+.prompt-pre.negative{color:#d6acb8}
+.prompt-warn,.prompt-messages{border:1px solid #765829;background:#3a2c1e;padding:13px 18px;color:#ffda9f;font-size:12px;line-height:1.6;margin:17px 22px;border-radius:8px}
+.prompt-messages p{margin:4px 0}
+#prompt-notes-form{padding:12px 23px 22px}
+#prompt-notes-form label{display:block;font-size:12px;color:#c0cff0;font-weight:750}
+#prompt-notes-form textarea{margin-top:11px;display:block;background:#0b162d;color:#f1f4ff;border:1px solid #3a4d70;border-radius:10px;resize:vertical;width:100%;padding:13px;font-size:12px;font:12px/1.55 inherit}
+.prompt-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+@media(max-width:1180px){.prompt-counters{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:700px){.prompt-counters{grid-template-columns:repeat(2,minmax(0,1fr))}.prompt-filter input{width:100%}.prompt-inspector h3{margin-left:15px}.prompt-pre{margin-left:15px;margin-right:15px;padding:12px}}
