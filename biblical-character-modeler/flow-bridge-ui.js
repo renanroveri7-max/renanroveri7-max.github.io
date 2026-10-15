@@ -7,7 +7,7 @@ const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 function request(type,prompt){
  return new Promise((resolve,reject)=>{
   const nonce="bcm-"+crypto.randomUUID();
-  const timeout=setTimeout(()=>{pending.delete(nonce);reject(Error("A extensão não respondeu. Instale/recarregue a versão 0.3.0 e atualize a página."));},type==="PROMPT_PREFILL"?12000:7000);
+  const timeout=setTimeout(()=>{pending.delete(nonce);reject(Error("A extensão não respondeu. Instale/recarregue a versão 0.5.0 e atualize a página."));},(type==="PROMPT_PREFILL"||type==="FLOW_CAPTURE_PREVIEW")?15000:7000);
   pending.set(nonce,{resolve,reject,timeout});
   g.postMessage({sender:"bcm-site",target:"flow-bridge",type,nonce,prompt:type==="PROMPT_PREFILL"?prompt:undefined},g.location.origin);
  });
@@ -59,7 +59,7 @@ function panel(){
  '<div class="flow-bridge-stats"><p><b>Comunicação local:</b> '+(state.connected?'Ativa · Extensão v'+esc(state.version):'Não confirmada')+'</p><p><b>Guia Google Flow:</b> '+flow+'</p><p><b>Inspeção estrutural:</b> '+desc+'</p></div>'+
  mapHtml()+mediaHtml()+
  '<p class="flow-bridge-disclaimer"><b>Importante:</b> detectar controles não confirma que podemos executar geração automática com o plano Ultra. Nenhum dado da conta é coletado e não utilizamos endpoints privados ou créditos.</p>'+
- '<p class="flow-bridge-install"><b>Instalação:</b> extraia a nova extensão, acesse <code>chrome://extensions</code>, desative a versão antiga e use <b>Carregar sem compactação</b> na pasta da versão 0.4.0. <a href="./download-extension.html" target="_blank" rel="noopener noreferrer"><b>BAIXAR EXTENSÃO v0.4.0 ↗</b></a> · <a href="https://github.com/renanroveri7-max/renanroveri7-max.github.io/tree/main/biblical-character-modeler/extension" target="_blank" rel="noopener noreferrer">Ver código no GitHub ↗</a></p></section>';
+ '<p class="flow-bridge-install"><b>Instalação:</b> extraia a nova extensão, acesse <code>chrome://extensions</code>, desative a versão antiga e use <b>Carregar sem compactação</b> na pasta da versão 0.5.0. <a href="./download-extension.html" target="_blank" rel="noopener noreferrer"><b>BAIXAR EXTENSÃO v0.5.0 ↗</b></a> · <a href="https://github.com/renanroveri7-max/renanroveri7-max.github.io/tree/main/biblical-character-modeler/extension" target="_blank" rel="noopener noreferrer">Ver código no GitHub ↗</a></p></section>';
 }
 function draw(){const node=g.document.getElementById("bcm-bridge-placeholder");if(node)node.innerHTML=panel();}
 async function run(type){
@@ -83,8 +83,14 @@ g.document.addEventListener("click",e=>{
 async function prefill(prompt){
  if(typeof prompt!=="string"||prompt.trim().length<40)throw Error("O prompt técnico ainda não está pronto.");
  if(prompt.length>35000)throw Error("Prompt acima do limite do teste (35.000 caracteres).");
- if(!state.connected||state.version!=="0.4.0")throw Error("Extensão v0.4.0 não detectada. Instale a versão nova e clique em TESTAR EXTENSÃO.");
+ if(!state.connected||state.version!=="0.5.0")throw Error("Extensão v0.5.0 não detectada. Instale a versão nova e clique em TESTAR EXTENSÃO.");
  return request("PROMPT_PREFILL",prompt);
 }
-g.BCMBridge={draw,run,prefill,version:"0.4.0"};
+async function capture(){
+ if(!state.connected||state.version!=="0.5.0")throw Error("Instale a extensão v0.5.0 e clique em TESTAR EXTENSÃO.");
+ const result=await request("FLOW_CAPTURE_PREVIEW");
+ if(!result||!result.captured||!result.captured.data)throw Error("Nenhuma imagem utilizável foi devolvida pelo Flow.");
+ return result.captured;
+}
+g.BCMBridge={draw,run,prefill,capture,version:"0.5.0"};
 })(window);
