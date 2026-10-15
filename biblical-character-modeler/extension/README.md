@@ -1,21 +1,27 @@
-# Biblical Character Modeler — Flow Bridge v0.4.0
+# Biblical Character Modeler — Flow Bridge v0.5.0
 
-Extensão experimental Chrome Manifest V3. Funciona apenas no domínio do Biblical Character Modeler, em comunicação com uma guia já aberta do Google Flow.
+Extensão experimental do Chrome. Não cria imagens, não inicia gerações e não contorna restrições de acesso do Google Flow.
 
-## Atualização
+## Novo teste: captura da prévia visível (não equivale ao original)
 
-1. Extraia o ZIP 0.4.0 para uma pasta permanente.
-2. Vá a `chrome://extensions`, remova/desative a versão antiga e ative **Modo do desenvolvedor**.
-3. Clique **Carregar sem compactação**, apontando para a pasta que contém `manifest.json`.
-4. No Biblical Character Modeler, pressione **Ctrl+F5**. Entre na aba Google Flow e clique **TESTAR EXTENSÃO**; deve aparecer 0.4.0.
+1. Em `chrome://extensions`, desative a versão antiga. Carregue **sem compactação** a pasta `extension` v0.5.0 (deve conter manifest.json).
+2. No Biblical Character Modeler, atualize a página e entre na aba Google Flow.
+3. Clique **TESTAR EXTENSÃO** e confirme a versão **0.5.0**.
+4. Abra apenas uma guia do Flow, já dentro de um projeto e com a imagem desejada ampliada.
+5. No Biblical Modeler, selecione o personagem e a fase corretos. Clique **TESTAR CAPTURA DA IMAGEM ABERTA (NÃO GERA)**.
+6. Se o navegador permitir leitura da imagem no canvas, o nosso site mostrará a prévia **sem salvá-la**.
+7. Se a imagem for de outro projeto/personagem, **DESCARTE**. Para salvar, verifique visualmente e clique **CONFIRMAR IDENTIDADE E SALVAR PRÉVIA**. O arquivo fica com status **PENDENTE DE AUDITORIA** em armazenamento IndexedDB.
 
-## Diagnóstico sem consumir créditos
+## Restrições de segurança
 
-1. Abra **uma única guia** do Google Flow, dentro do seu projeto.
-2. No nosso aplicativo, clique **MAPEAR IMAGENS**. Anote a quantidade inicial de mídias grandes detectadas.
-3. Para uma comparação posterior, depois de criar uma imagem no Flow **por sua própria escolha**, retorne ao site e clique novamente em **MAPEAR IMAGENS** (com o resultado visível na guia Flow).
-4. O painel compara as contagens. Caso permaneçam idênticas, isso **não prova** falta de resultados, pois o Flow pode exibir imagens por outros mecanismos ou fora da área visível.
+- A captura só é tentada mediante clique e confirmação do usuário.
+- A extensão não lê cookies, credenciais, URLs de mídia ou endpoints privados; não clica em Gerar.
+- É utilizada apenas uma imagem visível e ampliada, não a galeria toda.
+- O navegador pode bloquear canvas de imagem hospedada em outro domínio por CORS. Em caso de bloqueio, não haverá captura; **não há tentativa de contornar a proteção**.
+- O arquivo é uma prévia JPEG da imagem renderizada, não garantidamente o original do Flow. O limite é 3 MB e resolução máxima 1920 pixels no lado maior.
+- As imagens são gravadas somente após confirmação explícita do usuário, na identidade e fase selecionadas, e seguem pendentes de auditoria.
+- Caso esse teste não consiga capturar a imagem, continue usando o botão nativo de download do Google Flow e a importação manual do nosso app enquanto verificamos opções de integração oficialmente suportadas.
 
-**A extensão não clica em Gerar, não usa créditos, não lê conteúdos de prompts, não devolve fotos, não acessa cookies/tokens e não chama endpoints internos.** Os resultados são apenas quantidade, posição, dimensão e classe de origem (https/blob/data) de elementos renderizados. URLs das imagens nunca são transmitidas. Não representa integração completa nem confirma viabilidade de recuperação de mídia original.
+### Atualização dos arquivos
 
-O envio direto de prompt da versão 0.3.0 continua disponível: ele exige confirmação e campo vazio, e não inicia geração.
+Os arquivos `manifest.json`, `background.js`, `site-bridge.js` estão nesta mesma pasta. Para instalação sem compactação, eles devem permanecer juntos na mesma pasta.
